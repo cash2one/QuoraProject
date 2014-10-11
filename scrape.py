@@ -4,8 +4,11 @@ from lxml.etree import tostring
 from pprint import pprint
 
 def numToInt(s):
+	s = s.replace(',','')
 	if s.endswith('k'):
 		return int(float(s[:-1]) * 1000)
+	elif s.endswith('m'):
+		return int(float(s[:-1] * 1000000))
 	else:
 		return int(s)
 
@@ -19,7 +22,7 @@ def getQuestionPage():
 			yield qElm.getchildren()[0].attrib['href']
 		c += 1
 
-def readQuestion(url):
+def getQuestion(url):
 	parsed = pq(url, headers={'user-agent': 'QuoraScraper'})
 
 	question = parsed('div.question_text_edit > h1')[0].text_content()
@@ -55,7 +58,34 @@ def readQuestion(url):
 
 	return ret
 
-q = getQuestionPage().__next__()
-pprint(readQuestion(q))
-q = 'https://www.quora.com/What-are-some-of-the-best-rare-natural-phenomena-that-occur-on-Earth'
-pprint(readQuestion(q))
+def getUser(user):
+	url = 'https://www.quora.com/' + user
+	parsed = pq(url, headers={'user-agent': 'QuoraScraper'})
+
+	questions, answers, posts, followers, following, edits = [numToInt(i.text_content()) for i in parsed('span.profile_count')]
+
+	ret = {
+		'user': user,
+		'questions': questions,
+		'answers': answers,
+		'posts': posts,
+		'followers': followers,
+		'following': following,
+		'edits': edits
+	}
+
+	return ret
+
+if __name__ == '__main__':
+	print("TESTING:")
+	print("\n= Get Question =")
+	q = getQuestionPage().__next__()
+	print(q)
+	pprint(getQuestion(q))
+
+	print('\n= Complex Question =')
+	q = 'https://www.quora.com/What-are-some-of-the-best-rare-natural-phenomena-that-occur-on-Earth'
+	pprint(getQuestion(q))
+
+	print('\n= User =')
+	pprint(getUser('Robert-Love-1'))
