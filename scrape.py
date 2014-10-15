@@ -1,7 +1,57 @@
 from pyquery import PyQuery as pq
 from lxml.etree import tostring
+from selenium import webdriver
+import json
 
 from pprint import pprint
+from time import time
+
+driver = webdriver.PhantomJS()
+
+def processUrl(url):
+	global driver
+	driver.get(url)
+	if driver.execute_script("return $('.ErrorMain');"):
+		return None
+
+	scrollRepeat = '''
+	function isLoaded() {
+		var count = $('.answer_count');
+		if(count.length) {
+			count = parseInt(count[0].textContent.split(" "));
+		} else {
+			count = 0;
+		}
+		return $(".AnswerHeader:not(.feed_item_answer > div > div > div > div.AnswerHeader)").length == count;
+	}
+	function scroll() {
+		$('.pager_next.action_button').click();
+	}
+	var rep = setInterval(function() {
+		if(!isLoaded()) {
+			scroll();
+		} else {
+			clearInterval(rep);
+		}
+	}, 500);
+	'''
+
+	check = '''
+		var count = $('.answer_count');
+		if(count.length) {
+			count = parseInt(count[0].textContent.split(" "));
+		} else {
+			count = 0;
+		}
+		return $(".AnswerHeader:not(.feed_item_answer > div > div > div > div.AnswerHeader)").length == count;
+	'''
+
+	driver.execute_script(scrollRepeat);
+
+	while not driver.execute_script(check): pass
+
+	parsed = pq(driver.page_source)
+	return parsed
 
 def numToInt(s):
 	s = s.replace(',','')
@@ -23,7 +73,9 @@ def getQuestionPage():
 		c += 1
 
 def getQuestion(url):
-	parsed = pq(url, headers={'user-agent': 'QuoraScraper'})
+	parsed = processUrl(url)
+	if parsed is None:
+		return None
 
 	question = parsed('div.question_text_edit > h1')[0].text_content()
 	details = parsed('.question_details > div')[0].text_content()
@@ -39,7 +91,9 @@ def getQuestion(url):
 			author_info = a.cssselect('a.user')[0].attrib['href'][1:]
 			answer_text = answer_text[0].text_content()
 		else:
-			author_info = a.cssselect('.author_info > a')[0].get('href')[1:]
+			author_info = a.cssselect('a.user')
+			if author_info:
+				author_info = a.cssselect('a.user')[0].get('href')[1:]
 			answer_text = a.cssselect('.ExpandedAnswer > div > div')[0].text_content()
 
 		answer_info.append({
@@ -77,15 +131,19 @@ def getUser(user):
 	return ret
 
 if __name__ == '__main__':
-	print("TESTING:")
-	print("\n= Get Question =")
-	q = getQuestionPage().__next__()
-	print(q)
-	pprint(getQuestion(q))
-
-	print('\n= Complex Question =')
-	q = 'https://www.quora.com/What-are-some-of-the-best-rare-natural-phenomena-that-occur-on-Earth'
-	pprint(getQuestion(q))
-
-	print('\n= User =')
-	pprint(getUser('Robert-Love-1'))
+	try:
+		with open("{}.json".format(int(time())), 'w') as f:
+			avg = 0
+			for i, q in enumerate(getQuestionPage()):
+				start = time()
+				data = getQuestion(q)
+				if data is None:
+					print("{} : (SKIPPED) {}".format(i, q))
+				else:
+					print("{} : {}".format(i, q))
+					avg += time() - start
+					f.write(json.dumps(data) + '\n')
+	except KeyboardInterrupt:
+		print()
+		print()
+		print(avg / (i + 1))
