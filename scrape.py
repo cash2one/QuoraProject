@@ -6,12 +6,19 @@ import json
 from pprint import pprint
 from time import time
 
+import logging
+from logging import info
+
+logging.basicConfig(level=logging.INFO)
+
 driver = webdriver.PhantomJS()
 
 def processUrl(url):
 	global driver
+	info("\tLoading page")
 	driver.get(url)
-	while not driver.execute_script("return window.jQuery ? true : false"): pass
+	info("\tWaiting for jQuery")
+	while not driver.execute_script("return window.jQuery"): pass
 	if driver.execute_script("return $('.ErrorMain');"):
 		return None
 
@@ -23,7 +30,7 @@ def processUrl(url):
 		} else {
 			count = 0;
 		}
-		return $(".AnswerHeader:not(.feed_item_answer > div > div > div > div.AnswerHeader):not(.AnswerHeader .related_question").length == count;
+		return $(".AnswerHeader:not(.feed_item_answer > div > div > div > div.AnswerHeader)").length == count;
 	}
 	function scroll() {
 		$('.pager_next.action_button').click();
@@ -47,10 +54,13 @@ def processUrl(url):
 		return $(".AnswerHeader:not(.feed_item_answer > div > div > div > div.AnswerHeader)").length == count;
 	'''
 
+	info("\tExecuting main script")
 	driver.execute_script(scrollRepeat);
 
+	info("\tWaiting for AJAX")
 	while not driver.execute_script(check): pass
 
+	info("\tParsing")
 	parsed = pq(driver.page_source)
 	return parsed
 
@@ -95,6 +105,7 @@ def getQuestion(url):
 	answer_info = []
 	answers = parsed('.Answer:not(.ActionBar)')
 	c = 0
+	info("\tLooping through answers")
 	for a in answers:
 		upvotes = numToInt(a.cssselect('a.vote_item_link > span')[0].text_content())
 		answer_text = a.cssselect('div.TruncatedAnswer')
