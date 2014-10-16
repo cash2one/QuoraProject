@@ -11,6 +11,7 @@ driver = webdriver.PhantomJS()
 def processUrl(url):
 	global driver
 	driver.get(url)
+	while not driver.execute_script("return window.jQuery ? true : false"): pass
 	if driver.execute_script("return $('.ErrorMain');"):
 		return None
 
@@ -22,7 +23,7 @@ def processUrl(url):
 		} else {
 			count = 0;
 		}
-		return $(".AnswerHeader:not(.feed_item_answer > div > div > div > div.AnswerHeader)").length == count;
+		return $(".AnswerHeader:not(.feed_item_answer > div > div > div > div.AnswerHeader):not(.AnswerHeader .related_question").length == count;
 	}
 	function scroll() {
 		$('.pager_next.action_button').click();
@@ -55,7 +56,9 @@ def processUrl(url):
 
 def numToInt(s):
 	s = s.replace(',','')
-	if s.endswith('k'):
+	if not s:
+		return 0
+	elif s.endswith('k'):
 		return int(float(s[:-1]) * 1000)
 	elif s.endswith('m'):
 		return int(float(s[:-1] * 1000000))
@@ -77,9 +80,17 @@ def getQuestion(url):
 	if parsed is None:
 		return None
 
-	question = parsed('div.question_text_edit > h1')[0].text_content()
+	question = parsed('div.question_text_edit > h1')
+	if not question:
+		question = parsed('h1.review_question_text')
+	question = question[0].text_content()
+
 	details = parsed('.question_details > div')[0].text_content()
-	followers = numToInt(parsed('span.count')[0].text_content())
+	followers = parsed('span.count')
+	if followers:
+		followers = numToInt(followers[0].text_content())
+	else:
+		followers = 0
 
 	answer_info = []
 	answers = parsed('.Answer:not(.ActionBar)')
@@ -131,19 +142,29 @@ def getUser(user):
 	return ret
 
 if __name__ == '__main__':
-	try:
-		with open("{}.json".format(int(time())), 'w') as f:
-			avg = 0
-			for i, q in enumerate(getQuestionPage()):
-				start = time()
-				data = getQuestion(q)
-				if data is None:
-					print("{} : (SKIPPED) {}".format(i, q))
-				else:
+	from sys import argv
+	if len(argv) > 1:
+		url = argv[1]
+		data = getQuestion(url)
+		print("{}:".format(url))
+		if data is None:
+			print("\t(SKIPPED)")
+		else:
+			pprint(data)
+	else:
+		try:
+			with open("{}.json".format(int(time())), 'w') as f:
+				avg = 0
+				for i, q in enumerate(getQuestionPage()):
 					print("{} : {}".format(i, q))
-					avg += time() - start
-					f.write(json.dumps(data) + '\n')
-	except KeyboardInterrupt:
-		print()
-		print()
-		print(avg / (i + 1))
+					start = time()
+					data = getQuestion(q)
+					if data is None:
+						print("\t(SKIPPED)")
+					else:
+						avg += time() - start
+						f.write(json.dumps(data) + '\n')
+		except KeyboardInterrupt:
+			print()
+			print()
+			print(avg / (i + 1))
