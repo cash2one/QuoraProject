@@ -1,40 +1,63 @@
 from pyquery import PyQuery as pq
 from lxml.etree import tostring
+
 from selenium import webdriver
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+
 import json
 
 from pprint import pprint
 from time import time
 
+import atexit
 import logging
 from logging import info
 
 logging.basicConfig(level=logging.INFO)
 
-driver = webdriver.PhantomJS()
+user_agent = ("QuoraScraper")
+dcap = dict(DesiredCapabilities.PHANTOMJS)
+dcap["phantomjs.page.settings.userAgent"] = user_agent
+
+driver = webdriver.PhantomJS(desired_capabilities=dcap)
 
 def processUrl(url):
 	global driver
 	info("\tLoading page")
 	driver.get(url)
-	info("\tWaiting for jQuery")
-	while not driver.execute_script("return window.jQuery"): pass
-	if driver.execute_script("return $('.ErrorMain');"):
+	info("\tChecking if error page")
+	if not driver.find_elements_by_id('ErrorMain'):
 		return None
 
-	scrollRepeat = '''
+	funcs = '''
+	function getAnswers() {
+		var t_answers = document.getElementsByClassName('AnswerHeader');
+		var answers = [];
+		for(var i = 0; i < t_answers.length; i++) {
+			if(t_answers[i].parentElement.parentElement.parentElement.className != "feed_item_content_related_question") {
+				answers.push(t_answers[i]);
+			}
+		}
+		return answers;
+	}
 	function isLoaded() {
-		var count = $('.answer_count');
+		var count = document.getElementsByClassName('answer_count');
 		if(count.length) {
 			count = parseInt(count[0].textContent.split(" "));
 		} else {
 			count = 0;
 		}
-		return $(".AnswerHeader:not(.feed_item_answer > div > div > div > div.AnswerHeader)").length == count;
+		return getAnswers().length == count;
 	}
 	function scroll() {
-		$('.pager_next.action_button').click();
+		var elms = document.getElementsByClassName('pager_next');
+		for(var i = 0; i < elms.length; i++) {
+			elms[i].click();
+		}
 	}
+	'''
+
+	scrollRepeat = '''
 	var rep = setInterval(function() {
 		if(!isLoaded()) {
 			scroll();
@@ -44,21 +67,15 @@ def processUrl(url):
 	}, 500);
 	'''
 
-	check = '''
-		var count = $('.answer_count');
-		if(count.length) {
-			count = parseInt(count[0].textContent.split(" "));
-		} else {
-			count = 0;
-		}
-		return $(".AnswerHeader:not(.feed_item_answer > div > div > div > div.AnswerHeader)").length == count;
-	'''
+	check = 'return isLoaded();'
 
 	info("\tExecuting main script")
-	driver.execute_script(scrollRepeat);
+	driver.execute_script(funcs + scrollRepeat);
 
 	info("\tWaiting for AJAX")
-	while not driver.execute_script(check): pass
+	while not driver.execute_script(funcs + check): pass
+
+	print(driver.execute_script(funcs + check))
 
 	info("\tParsing")
 	parsed = pq(driver.page_source)
@@ -152,8 +169,13 @@ def getUser(user):
 
 	return ret
 
+@atexit.register
+def closeBrowser():
+	driver.close()
+
 if __name__ == '__main__':
 	from sys import argv
+
 	if len(argv) > 1:
 		url = argv[1]
 		data = getQuestion(url)
@@ -164,7 +186,7 @@ if __name__ == '__main__':
 			pprint(data)
 	else:
 		try:
-			with open("{}.json".format(int(time())), 'w') as f:
+			with open("data/{}.json".format(int(time())), 'w') as f:
 				avg = 0
 				for i, q in enumerate(getQuestionPage()):
 					print("{} : {}".format(i, q))
@@ -176,6 +198,4 @@ if __name__ == '__main__':
 						avg += time() - start
 						f.write(json.dumps(data) + '\n')
 		except KeyboardInterrupt:
-			print()
-			print()
-			print(avg / (i + 1))
+			print('\n\n{}'.format(avg / (i + 1)))
