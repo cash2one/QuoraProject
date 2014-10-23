@@ -11,7 +11,7 @@ from time import time
 
 import atexit
 import logging
-from logging import info
+from logging import info, warn
 
 logging.basicConfig(level=logging.INFO)
 
@@ -19,14 +19,18 @@ user_agent = ("QuoraScraper")
 dcap = dict(DesiredCapabilities.PHANTOMJS)
 dcap["phantomjs.page.settings.userAgent"] = user_agent
 
-driver = webdriver.PhantomJS(desired_capabilities=dcap)
+driver = webdriver.PhantomJS(service_args=['--load-images=no'], desired_capabilities=dcap)
 
 def processUrl(url):
 	global driver
+
+	if url.startswith('https'):
+		warn('URL started with "https", replacing with "http"')
+		url = url[:4] + url[5:]
 	info("\tLoading page")
 	driver.get(url)
 	info("\tChecking if error page")
-	if not driver.find_elements_by_id('ErrorMain'):
+	if driver.find_elements_by_id('ErrorMain'):
 		return None
 
 	funcs = '''
@@ -69,13 +73,33 @@ def processUrl(url):
 
 	check = 'return isLoaded();'
 
+	clickOnStuff = '''
+		function simulateClick(el) {
+			var evt;
+			if (document.createEvent) {
+				evt = document.createEvent("MouseEvents");
+				evt.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+			}
+			(evt) ? el.dispatchEvent(evt) : (el.click && el.click());
+		}
+		var elms = Array.prototype.slice.call(document.getElementsByClassName('CollapsedAnswersSectionCollapsed')).concat(
+					Array.prototype.slice.call(document.getElementsByClassName('view_comments'))).concat(
+					Array.prototype.slice.call(document.getElementsByClassName('comment_replies_show_child_link'))).concat(
+					Array.prototype.slice.call(document.getElementsByClassName('more_link')));
+
+		for(var i = 0; i < elms.length; i++) {
+			simulateClick(elms[i]);
+		}
+	'''
+
 	info("\tExecuting main script")
 	driver.execute_script(funcs + scrollRepeat);
 
-	info("\tWaiting for AJAX")
+	info("\tWaiting for answers to load")
 	while not driver.execute_script(funcs + check): pass
 
-	print(driver.execute_script(funcs + check))
+	info("\tExpanding answers and comment chains")
+	driver.execute_script(clickOnStuff)
 
 	info("\tParsing")
 	parsed = pq(driver.page_source)
