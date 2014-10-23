@@ -21,6 +21,10 @@ dcap["phantomjs.page.settings.userAgent"] = user_agent
 
 driver = webdriver.PhantomJS(service_args=['--load-images=no'], desired_capabilities=dcap)
 
+def log404(url):
+	with open('404.log', 'a') as f:
+		f.write(url + '\n')
+
 def processUrl(url):
 	global driver
 
@@ -31,6 +35,7 @@ def processUrl(url):
 	driver.get(url)
 	info("\tChecking if error page")
 	if driver.find_elements_by_id('ErrorMain'):
+		log404(url)
 		return None
 
 	funcs = '''
