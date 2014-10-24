@@ -28,4 +28,4 @@ if __name__ == '__main__':
 	except KeyboardInterrupt:
 		pass
 	with open('data/scraped_{}.json'.format(int(time())), 'w') as f:
-		json.dump(output, f)
+		f.write('\n'.join([json.dumps(i) for i in output]))
