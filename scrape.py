@@ -1,5 +1,6 @@
 from pyquery import PyQuery as pq
 from lxml.etree import tostring
+from urllib.parse import quote
 
 from selenium import webdriver
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
@@ -9,7 +10,6 @@ import json
 from pprint import pprint
 from time import time
 
-import atexit
 import logging
 from logging import info, warn
 
@@ -21,8 +21,8 @@ dcap["phantomjs.page.settings.userAgent"] = user_agent
 
 driver = webdriver.PhantomJS(service_args=['--load-images=no'], desired_capabilities=dcap)
 
-def log404(url):
-	with open('404.log', 'a') as f:
+def logError(url):
+	with open('error.log', 'a') as f:
 		f.write(url + '\n')
 
 def processUrl(url):
@@ -33,9 +33,10 @@ def processUrl(url):
 		url = url[:4] + url[5:]
 	info("\tLoading page")
 	driver.get(url)
+
 	info("\tChecking if error page")
 	if driver.find_elements_by_id('ErrorMain'):
-		log404(url)
+		logError(url)
 		return None
 
 	funcs = '''
@@ -122,19 +123,19 @@ def numToInt(s):
 		return int(s)
 
 def getQuestionPage():
-	qs = 'https://www.quora.com/sitemap/questions?page_id='
-	#  = 'https://www.quora.com/sitemap/recent?page_id=''
+	qs = 'http://www.quora.com/sitemap/questions?page_id='
+	#  = 'http://www.quora.com/sitemap/recent?page_id=''
 	c = 1
 	while True:
 		parsed = pq(qs + str(c), headers={'user-agent': 'QuoraScraper'})
 		for qElm in parsed('.content > div > div')[0].getchildren():
-			yield qElm.getchildren()[0].attrib['href']
+			url = qElm.getchildren()[0].attrib['href'][7:]
+			url = 'http://' + quote(url)
+			yield url
 		c += 1
 
-def getQuestion(url):
-	parsed = processUrl(url)
-	if parsed is None:
-		return None
+def getQuestion(data, url):
+	parsed = pq(data)
 
 	question = parsed('div.question_text_edit > h1')
 	if not question:
@@ -181,7 +182,7 @@ def getQuestion(url):
 	return ret
 
 def getUser(user):
-	url = 'https://www.quora.com/' + user
+	url = 'http://www.quora.com/' + user
 	parsed = pq(url, headers={'user-agent': 'QuoraScraper'})
 
 	questions, answers, posts, followers, following, edits = [numToInt(i.text_content()) for i in parsed('span.profile_count')]
@@ -198,16 +199,13 @@ def getUser(user):
 
 	return ret
 
-@atexit.register
-def closeBrowser():
-	driver.close()
-
 if __name__ == '__main__':
 	from sys import argv
 
 	if len(argv) > 1:
 		url = argv[1]
-		data = getQuestion(url)
+		data = processUrl(url)
+		data = getQuestion(data, url)
 		print("{}:".format(url))
 		if data is None:
 			print("\t(SKIPPED)")
@@ -220,7 +218,8 @@ if __name__ == '__main__':
 				for i, q in enumerate(getQuestionPage()):
 					print("{} : {}".format(i, q))
 					start = time()
-					data = getQuestion(q)
+					data = processUrl(q)
+					data = getQuestion(data, q)
 					if data is None:
 						print("\t(SKIPPED)")
 					else:
@@ -228,3 +227,4 @@ if __name__ == '__main__':
 						f.write(json.dumps(data) + '\n')
 		except KeyboardInterrupt:
 			print('\n\n{}'.format(avg / (i + 1)))
+	driver.close()
