@@ -1,8 +1,9 @@
 import socketserver
 import json
 import os.path
-from queue import Queue
 import itertools
+import argparse
+from queue import Queue
 
 import logging
 logging.basicConfig(level=logging.INFO)
@@ -52,8 +53,14 @@ class ScrapeServer(socketserver.StreamRequestHandler):
 		self.wfile.write(bytes(self.server.queue.get() + '\n ', 'utf-8'))
 
 if __name__ == "__main__":
-	HOST, PORT = "localhost", 9999
+	parser = argparse.ArgumentParser(description='Start Quora scraping server.')
+	parser.add_argument('PORT', type=int, default=9999, nargs='?', help='port to run server on')
+	args = parser.parse_args()
 
+	HOST = "localhost"
+	PORT = args.PORT
+
+	logging.info("Starting server on port {}".format(PORT))
 	server = socketserver.TCPServer((HOST, PORT), ScrapeServer)
 
 	### ADD GLOBAL DATA TO SERVER INSTANCE ###
