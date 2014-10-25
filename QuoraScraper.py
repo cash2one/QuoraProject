@@ -1,13 +1,11 @@
-from pyquery import PyQuery as pq
+import logging
 
+from pyquery import PyQuery as pq
 from urllib.parse import quote
+from time import sleep
 
 from selenium import webdriver
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
-
-from time import sleep
-
-import logging
 
 class QuoraScraper:
 	SLEEP_TIME = 1
@@ -215,19 +213,21 @@ class QuoraScraper:
 		return ret
 
 if __name__ == '__main__':
-	from sys import argv
+	import argparse
 	from pprint import pprint
 
-	if len(argv) > 1:
-		try:
-			url = argv[1]
-			scraper = QuoraScraper()
-			html = scraper.processUrl(url)
-			data = scraper.getQuestion(html)
-			print("{}:".format(url))
-			if data is None:
-				print("\t(SKIPPED)")
-			else:
-				pprint(data)
-		finally:
-			scraper.close()
+	parser = argparse.ArgumentParser(description='Scrape info from Quora question url.')
+	parser.add_argument('url', type=str, nargs=1, help='url to scrape')
+	url = parser.parse_args().url[0]
+
+	try:
+		scraper = QuoraScraper()
+		html = scraper.processUrl(url)
+		data = scraper.getQuestion(html)
+		print("{}:".format(url))
+		if data is None:
+			print("ERROR")
+		else:
+			pprint(data)
+	finally:
+		scraper.close()
