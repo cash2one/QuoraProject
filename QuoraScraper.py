@@ -17,7 +17,7 @@ class QuoraScraper:
 		dcap["phantomjs.page.settings.userAgent"] = self.USER_AGENT
 
 		# Disable the loading of images
-		self.driver = webdriver.PhantomJS(service_args=['--load-images=no'], desired_capabilities=dcap)
+		self.driver = webdriver.PhantomJS(service_log_path='/dev/null', service_args=['--load-images=no'], desired_capabilities=dcap)
 
 	def close(self):
 		self.driver.close()
