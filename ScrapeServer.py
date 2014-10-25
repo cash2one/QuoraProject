@@ -37,7 +37,10 @@ class ScrapeServer(socketserver.StreamRequestHandler):
 	def handle(self):
 		data = self.rfile.readline().strip()
 		data = json.loads(data.decode('utf-8'))
-		logging.info("{} : {}".format(self.client_address, data['url']))
+		if not data['url']:
+			logging.info("{} : {}".format(self.client_address, "REQUEST URL"))
+		else:
+			logging.info("{} : {}".format(self.client_address, "RETURN URL = {}".format(data['url'])))
 
 		if data['data']:
 			self.server.directory[data['url']] = data["data"]
