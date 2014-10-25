@@ -27,7 +27,7 @@ def getUrl(data):
 		sock.connect((HOST, PORT))
 		sock.sendall(data)
 		with sock.makefile() as f:
-			url = f.readline()
+			url = f.readline().strip()
 	finally:
 		sock.close()
 
@@ -42,7 +42,7 @@ try:
 		html = scraper.processUrl(url)
 		data = scraper.getQuestion(html)
 
-		error = True
+		error = False
 		if data is None:
 			error = True
 			data = False
