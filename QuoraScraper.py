@@ -156,6 +156,15 @@ class QuoraScraper:
 		else:
 			followers = 0
 
+		# Topics
+		tops = parsed('.BreadCrumb a') + parsed('.QuestionTopicListItem a')
+		topics = []
+		if not tops:
+			logging.warn("No topics for question")
+		else:
+			for t in tops:
+				topics.append(t.attrib['href'])
+
 		# Answers
 		logging.debug("\tLooping through answers")
 		answer_info = []
@@ -183,6 +192,7 @@ class QuoraScraper:
 
 		ret = {
 			'question'	: question,
+			'topics'	: topics,
 			'details'	: details,
 			'followers'	: followers,
 			'answers'	: answer_info
