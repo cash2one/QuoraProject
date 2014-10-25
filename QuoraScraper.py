@@ -59,9 +59,17 @@ class QuoraScraper:
 		function scroll() {
 			var elms = document.getElementsByClassName('pager_next');
 			for(var i = 0; i < elms.length; i++) {
-				elms[i].click();
+				simulateClick(elms[i]);
 			}
 		}
+		function simulateClick(el) {
+				var evt;
+				if (document.createEvent) {
+					evt = document.createEvent("MouseEvents");
+					evt.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+				}
+				(evt) ? el.dispatchEvent(evt) : (el.click && el.click());
+			}
 		'''
 
 		scrollRepeat = '''
@@ -77,14 +85,6 @@ class QuoraScraper:
 		check = 'return isLoaded();'
 
 		clickOnStuff = '''
-			function simulateClick(el) {
-				var evt;
-				if (document.createEvent) {
-					evt = document.createEvent("MouseEvents");
-					evt.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
-				}
-				(evt) ? el.dispatchEvent(evt) : (el.click && el.click());
-			}
 			var elms = Array.prototype.slice.call(document.getElementsByClassName('CollapsedAnswersSectionCollapsed')).concat(
 						Array.prototype.slice.call(document.getElementsByClassName('view_comments'))).concat(
 						Array.prototype.slice.call(document.getElementsByClassName('comment_replies_show_child_link'))).concat(
@@ -102,7 +102,7 @@ class QuoraScraper:
 		while not self.driver.execute_script(funcs + check): pass
 
 		logging.debug("\tExpanding answers and comment chains")
-		self.driver.execute_script(clickOnStuff)
+		self.driver.execute_script(funcs + clickOnStuff)
 
 		# Sleep before next request
 		sleep(self.SLEEP_TIME)
@@ -165,6 +165,12 @@ class QuoraScraper:
 			for t in tops:
 				topics.append(t.attrib['href'])
 
+		# Other links
+		link_elements = parsed('.logged_out_related_questions_container a') + parsed('.SidebarTopicBestQuestions a')
+		links = []
+		for e in link_elements:
+			links.append("http://www.quora.com" + e.attrib['href'])
+
 		# Answers
 		logging.debug("\tLooping through answers")
 		answer_info = []
@@ -193,6 +199,7 @@ class QuoraScraper:
 		ret = {
 			'question'	: question,
 			'topics'	: topics,
+			'links'		: links,
 			'details'	: details,
 			'followers'	: followers,
 			'answers'	: answer_info

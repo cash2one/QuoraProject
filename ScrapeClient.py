@@ -69,9 +69,10 @@ try:
 			fn = OUTPUT_DIRECTORY + "/" + url.split('/')[-1] + '.out'
 			with open(fn, 'w') as f:
 				json.dump(output, f)
-
+		if not data['links']:
+			logging.warn("No links on page.")
 		request = {
-			"links" : list(),
+			"links" : data['links'],
 			"url" : url,
 			"error" : error,
 			"data" : {
