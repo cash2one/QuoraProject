@@ -72,7 +72,7 @@ try:
 		url = getUrl(request)
 
 except ConnectionRefusedError:
-	logging.log("Server shut down, quitting.")
+	logging.info("Server shut down, quitting.")
 
 finally:
 	scraper.close()
