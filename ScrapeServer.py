@@ -1,9 +1,16 @@
-import socketserver
+import sys
+VERSION = sys.version_info[0]
+
+if VERSION == 3:
+	import socketserver
+	from queue import Queue
+else:
+	import SocketServer as socketserver
+	from Queue import Queue
+
 import json
 import os.path
 import itertools
-import argparse
-from queue import Queue
 
 import logging
 logging.basicConfig(level=logging.INFO)
@@ -53,9 +60,11 @@ class ScrapeServer(socketserver.StreamRequestHandler):
 			self.logError(data['url'])
 
 		self.checkQueue()
-		self.wfile.write(bytes(self.server.queue.get() + '\n ', 'utf-8'))
+		self.wfile.write((self.server.queue.get() + '\n ').encode('utf-8'))
 
 if __name__ == "__main__":
+	import argparse
+
 	parser = argparse.ArgumentParser(description='Start Quora scraping server.')
 	parser.add_argument('PORT', type=int, default=9999, nargs='?', help='port to run server on')
 	args = parser.parse_args()

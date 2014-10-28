@@ -1,5 +1,13 @@
+import sys
+VERSION = sys.version_info[0]
+
 from pyquery import PyQuery as pq
-from urllib.parse import quote
+
+if VERSION == 3:
+	from urllib.parse import quote
+else:
+	from urllib import quote
+
 from time import sleep
 
 from selenium import webdriver

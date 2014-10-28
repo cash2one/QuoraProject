@@ -1,7 +1,9 @@
-import socket
 import sys
-import json
+VERSION = sys.version_info[0]
+
 import gzip
+import socket
+import json
 import binascii
 import os.path
 import argparse
@@ -11,6 +13,10 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 from QuoraScraper import QuoraScraper
+
+if VERSION == 2:
+	from StringIO import StringIO
+	ConnectionRefusedError = socket.error
 
 parser = argparse.ArgumentParser(description='Start Quora scraping client.')
 parser.add_argument('HOST', type=str, default="localhost", nargs='?', help='address of server')
@@ -35,17 +41,19 @@ def getUrl(data):
 	try:
 		sock.connect((HOST, PORT))
 		sock.sendall(data)
-		with sock.makefile() as f:
-			url = f.readline().strip()
+		f = sock.makefile()
+		url = f.readline().strip()
+		f.close()
+
 	finally:
 		sock.close()
 
 	return url
 
+scraper = QuoraScraper()
+logging.info("Connecting to {} on port {}".format(HOST, PORT))
 try:
-	logging.info("Connecting to {} on port {}".format(HOST, PORT))
 	url = getUrl(EMPTY_REQUEST)
-	scraper = QuoraScraper()
 	while True:
 		logging.info("URL = {}".format(url))
 		t = int(time())
@@ -57,8 +65,16 @@ try:
 			error = True
 			data = False
 		else:
+			if VERSION == 3:
+				compressed_html = binascii.b2a_hex(gzip.compress(bytes(html, 'utf-8'))).decode('utf-8')
+			else:
+				out = StringIO()
+				with gzip.GzipFile(fileobj=out, mode="w") as f:
+					f.write(html.encode('utf-8'))
+				compressed_html = out.getvalue()
+				compressed_html = binascii.b2a_hex(compressed_html).decode('utf-8')
 			output = {
-				"html"	: binascii.b2a_hex(gzip.compress(bytes(html, 'utf-8'))).decode('utf-8'),
+				"html"	: compressed_html,
 				"data"	: data,
 				"time"	: t,
 				"url"	: url
