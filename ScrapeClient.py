@@ -1,6 +1,7 @@
 import sys
 VERSION = sys.version_info[0]
 
+import hashlib
 import gzip
 import socket
 import json
@@ -82,7 +83,8 @@ try:
 
 			if not os.path.isdir(OUTPUT_DIRECTORY):
 				os.mkdir(OUTPUT_DIRECTORY)
-			fn = OUTPUT_DIRECTORY + "/" + url.split('/')[-1] + '.out'
+			hashed_url = hashlib.md5(url.encode('utf-8')).hexdigest()
+			fn = '{}/{}_{}.out'.format(OUTPUT_DIRECTORY, t, hashed_url)
 			with open(fn, 'w') as f:
 				json.dump(output, f)
 		if not data['links']:
