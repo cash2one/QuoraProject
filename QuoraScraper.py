@@ -18,7 +18,7 @@ logging.getLogger("selenium").setLevel(logging.WARNING)
 logging.getLogger("requests").setLevel(logging.WARNING)
 
 class QuoraScraper:
-	SLEEP_TIME = 1
+	SLEEP_TIME = 15
 	USER_AGENT = "QuoraScraper"
 
 	def __init__(self):
