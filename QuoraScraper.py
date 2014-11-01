@@ -115,6 +115,7 @@ class QuoraScraper:
 		self.driver.execute_script(funcs + clickOnStuff)
 
 		# Sleep before next request
+		logging.debug("\tSleeping")
 		sleep(self.SLEEP_TIME)
 
 		return self.driver.page_source
