@@ -18,7 +18,7 @@ logging.basicConfig(level=logging.INFO)
 
 from QuoraScraper import QuoraScraper
 
-DATA_DIR "data"
+DATA_DIR = "data"
 DIRECTORY_FILE = DATA_DIR + '/directory.json'
 LINKS_FILE = DATA_DIR + '/links.json'
 ERROR_FILE = DATA_DIR + '/error.log'
