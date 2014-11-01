@@ -8,6 +8,7 @@ else:
 	import SocketServer as socketserver
 	from Queue import Queue
 
+import socket
 import json
 import os.path
 import itertools
@@ -69,10 +70,10 @@ if __name__ == "__main__":
 	parser.add_argument('PORT', type=int, default=9999, nargs='?', help='port to run server on')
 	args = parser.parse_args()
 
-	HOST = "localhost"
+	HOST = socket.gethostname()
 	PORT = args.PORT
 
-	logging.info("Starting server on port {}".format(PORT))
+	logging.info("Starting server on {}:{}".format(HOST, PORT))
 	server = socketserver.TCPServer((HOST, PORT), ScrapeServer)
 
 	### ADD GLOBAL DATA TO SERVER INSTANCE ###
