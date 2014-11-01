@@ -6,7 +6,7 @@ import gzip
 import socket
 import json
 import binascii
-import os.path
+import os
 import argparse
 from time import time
 
@@ -27,7 +27,11 @@ args = parser.parse_args()
 HOST = args.HOST
 PORT = args.PORT
 
-OUTPUT_DIRECTORY = "data"
+if os.path.isdir("/export/a04/wpovell/"):
+	OUTPUT_DIRECTORY = "/export/a04/wpovell/scrape_data"
+else:
+	OUTPUT_DIRECTORY = "data"
+
 EMPTY_REQUEST = {
 	"links"	: [],
 	"url"	: "",

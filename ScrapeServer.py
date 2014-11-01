@@ -18,7 +18,11 @@ logging.basicConfig(level=logging.INFO)
 
 from QuoraScraper import QuoraScraper
 
-DATA_DIR = "data"
+if os.path.isdir("/export/a04/wpovell/"):
+	DATA_DIR = "/export/a04/wpovell/scrape_data"
+else:
+	DATA_DIR = "data"
+
 DIRECTORY_FILE = DATA_DIR + '/directory.json'
 LINKS_FILE = DATA_DIR + '/links.json'
 ERROR_FILE = DATA_DIR + '/error.log'

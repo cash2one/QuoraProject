@@ -8,6 +8,7 @@ if VERSION == 3:
 else:
 	from urllib import quote
 
+import os
 from time import sleep
 
 from selenium import webdriver
@@ -26,8 +27,12 @@ class QuoraScraper:
 		dcap = dict(DesiredCapabilities.PHANTOMJS)
 		dcap["phantomjs.page.settings.userAgent"] = self.USER_AGENT
 
+		ex_path = "/home/wpovell/phantomjs-1.9.8-linux-i686/bin/phantomjs"
+		if not os.path.isfile(ex_path):
+			ex_path="/usr/local/bin/phantomjs"
+
 		# Disable the loading of images
-		self.driver = webdriver.PhantomJS(service_log_path='/dev/null', service_args=['--load-images=no'], desired_capabilities=dcap)
+		self.driver = webdriver.PhantomJS(executable_path=ex_path, service_log_path='/dev/null', service_args=['--load-images=no'], desired_capabilities=dcap)
 
 	def close(self):
 		self.driver.close()
