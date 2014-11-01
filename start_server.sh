@@ -26,3 +26,5 @@ while [ $bad_port == 1 ]; do
     fi
 done
 echo "Available port found: $(hostname):$MST_PORT"
+
+python -u ScrapeServer.py $MST_PORT
