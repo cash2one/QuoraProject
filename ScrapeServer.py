@@ -18,9 +18,10 @@ logging.basicConfig(level=logging.INFO)
 
 from QuoraScraper import QuoraScraper
 
-DIRECTORY_FILE = 'data/directory.json'
-LINKS_FILE = 'data/links.json'
-ERROR_FILE = 'data/error.log'
+DATA_DIR "data"
+DIRECTORY_FILE = DATA_DIR + '/directory.json'
+LINKS_FILE = DATA_DIR + '/links.json'
+ERROR_FILE = DATA_DIR + '/error.log'
 QUEUE_REFILL = 10
 
 # Prevents "Address already in use" error
@@ -99,6 +100,8 @@ if __name__ == "__main__":
 	finally:
 		logging.info("Shutting down server")
 		server.shutdown()
+		if not os.path.isdir(DATA_DIR):
+			os.mkdir(DATA_DIR)
 		with open(DIRECTORY_FILE, 'w') as f:
 			json.dump(server.directory, f)
 		with open(LINKS_FILE, 'w') as f:
