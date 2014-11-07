@@ -1,3 +1,5 @@
+#!/bin/bash
+set -o nounset
 HOST=$1
 PORT=$2
 NUM_TO_START=$3
