@@ -22,15 +22,16 @@ if VERSION == 2:
 parser = argparse.ArgumentParser(description='Start Quora scraping client.')
 parser.add_argument('HOST', type=str, default="localhost", nargs='?', help='address of server')
 parser.add_argument('PORT', type=int, default=9999, nargs='?', help='port server is listening on')
+parser.add_argument('-o', '--output', type=str, default=None, nargs=1, help="directory to write output to")
 args = parser.parse_args()
 
 HOST = args.HOST
 PORT = args.PORT
 
-if os.path.isdir("/export/a04/wpovell/"):
-	OUTPUT_DIRECTORY = "/export/a04/wpovell/scrape_data"
-else:
+if args.output is None:
 	OUTPUT_DIRECTORY = "data"
+else:
+	OUTPUT_DIRECTORY = args.output[0]
 
 EMPTY_REQUEST = {
 	"links"	: [],

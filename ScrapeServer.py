@@ -18,20 +18,12 @@ logging.basicConfig(level=logging.INFO)
 
 from QuoraScraper import QuoraScraper
 
-if os.path.isdir("/export/a04/wpovell/"):
-	DATA_DIR = "/export/a04/wpovell/scrape_data"
-else:
-	DATA_DIR = "data"
-
-DIRECTORY_FILE = DATA_DIR + '/directory.json'
-LINKS_FILE = DATA_DIR + '/links.json'
-ERROR_FILE = DATA_DIR + '/error.log'
-QUEUE_REFILL = 10
-
 # Prevents "Address already in use" error
 socketserver.TCPServer.allow_reuse_address = True
 
 class ScrapeServer(socketserver.StreamRequestHandler):
+	QUEUE_REFILL = 10
+
 	@staticmethod
 	def logError(url):
 		with open(ERROR_FILE, 'a') as f:
@@ -44,7 +36,7 @@ class ScrapeServer(socketserver.StreamRequestHandler):
 				if not i in self.server.directory:
 					self.server.queue.put(i)
 					c += 1
-				if c >= QUEUE_REFILL:
+				if c >= self.QUEUE_REFILL:
 					break
 
 	def handle(self):
@@ -73,7 +65,17 @@ if __name__ == "__main__":
 
 	parser = argparse.ArgumentParser(description='Start Quora scraping server.')
 	parser.add_argument('PORT', type=int, default=9999, nargs='?', help='port to run server on')
+	parser.add_argument('-o', '--output', type=str, default=None, nargs=1, help="directory to write output to")
 	args = parser.parse_args()
+
+	if args.output is None:
+		DATA_DIR = "data"
+	else:
+		DATA_DIR = args.output[0]
+
+	DIRECTORY_FILE = DATA_DIR + '/directory.json'
+	LINKS_FILE = DATA_DIR + '/links.json'
+	ERROR_FILE = DATA_DIR + '/error.log'
 
 	HOST = socket.gethostname()
 	PORT = args.PORT
