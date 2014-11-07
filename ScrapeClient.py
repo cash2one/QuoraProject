@@ -23,6 +23,7 @@ parser = argparse.ArgumentParser(description='Start Quora scraping client.')
 parser.add_argument('HOST', type=str, default="localhost", nargs='?', help='address of server')
 parser.add_argument('PORT', type=int, default=9999, nargs='?', help='port server is listening on')
 parser.add_argument('-o', '--output', type=str, default=None, nargs=1, help="directory to write output to")
+parser.add_argument('-t', '--wait', type=int, default=15, nargs=1, help="how long to wait between requets")
 args = parser.parse_args()
 
 HOST = args.HOST
@@ -56,7 +57,7 @@ def getUrl(data):
 
 	return url
 
-scraper = QuoraScraper()
+scraper = QuoraScraper(args.wait)
 logging.info("Connecting to {} on port {}".format(HOST, PORT))
 try:
 	url = getUrl(EMPTY_REQUEST)

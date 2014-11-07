@@ -22,7 +22,9 @@ class QuoraScraper:
 	SLEEP_TIME = 15
 	USER_AGENT = "QuoraScraper"
 
-	def __init__(self):
+	def __init__(self, wait=15):
+		SLEEP_TIME = wait
+
 		# Set user-agent
 		dcap = dict(DesiredCapabilities.PHANTOMJS)
 		dcap["phantomjs.page.settings.userAgent"] = self.USER_AGENT
