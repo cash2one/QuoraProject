@@ -98,6 +98,9 @@ if __name__ == "__main__":
 				entry = json.loads(entry)
 				key = entry.keys()[0]
 				server.directory[key] = entry[key]
+	else:
+		f = open(DIRECTORY_FILE, 'w')
+		f.close()
 
 	if os.path.isfile(LINKS_FILE):
 		with open(LINKS_FILE) as f:
