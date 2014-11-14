@@ -217,7 +217,12 @@ class QuoraScraper:
 				author_info = a.cssselect('a.user')
 				if author_info:
 					author_info = a.cssselect('a.user')[0].get('href')[1:]
-				answer_text = a.cssselect('.ExpandedAnswer > div > div')[0].text_content()
+				answer_text = a.cssselect('.ExpandedAnswer')[0]
+				child_divs = answer_text.cssselect('div > div')
+				if not child_divs:
+					answer_text = answer_text.text_content()
+				else:
+					answer_text = child_divs[0].text_content()
 
 			answer_info.append({
 				'author'	: author_info,
