@@ -24,8 +24,8 @@ class QuoraScraper:
 	USER_AGENT = "QuoraScraper"
 
 	def __init__(self, wait=15, timeout=120):
-		SLEEP_TIME = wait
-		TIMEOUT = timeout
+		self.SLEEP_TIME = wait
+		self.TIMEOUT = timeout
 		# Set user-agent
 		dcap = dict(DesiredCapabilities.PHANTOMJS)
 		dcap["phantomjs.page.settings.userAgent"] = self.USER_AGENT
@@ -274,7 +274,7 @@ if __name__ == '__main__':
 	url = parser.parse_args().url[0]
 
 	try:
-		scraper = QuoraScraper()
+		scraper = QuoraScraper(wait=0) # No need to sleep since we're only loading one page
 		html = scraper.processUrl(url)
 		data = scraper.getQuestion(html)
 		print("{}:".format(url))
