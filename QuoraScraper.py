@@ -203,7 +203,7 @@ class QuoraScraper:
 		link_elements = parsed('.logged_out_related_questions_container a') + parsed('.SidebarTopicBestQuestions a')
 		links = set()
 		for e in link_elements:
-			links.add("http://www.quora.com" + e.attrib['href'])
+			links.add("http://www.quora.com" + quote(e.attrib['href'].encode('utf-8')))
 		links = list(links)
 
 		# Answers
