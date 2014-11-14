@@ -77,7 +77,7 @@ if __name__ == "__main__":
 	LINKS_FILE = DATA_DIR + '/links.json'
 	ERROR_FILE = DATA_DIR + '/error.log'
 
-	HOST = socket.gethostname()
+	HOST = '' 
 	PORT = args.PORT
 
 	logging.info("Starting server on {}:{}".format(HOST, PORT))
