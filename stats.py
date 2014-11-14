@@ -18,6 +18,7 @@ if __name__ == '__main__':
 	avg_followers = 0
 	qs_with_answers = 0
 	qs_with_details = 0
+	topic_counts = {}
 
 	for entry in data:
 		key = entry.keys()[0]
@@ -35,8 +36,19 @@ if __name__ == '__main__':
 
 		avg_followers += url_data['data']['followers']
 
+		for topic in url_data['data']['topics']:
+			if topic not in topic_counts:
+				topic_counts[topic] = 0
+			topic_counts[topic] += 1
+
 	print("Number of Questions: {}".format(len(data)))
 	print("Average Number of Answers: {:.2f}".format(avg_answers / len(data)))
 	print("Average Number of Followers: {:.2f}".format(avg_followers / len(data)))
 	print("Percent Questions with Answers: {:.2f}%".format(qs_with_answers / len(data) * 100))
 	print("Percent Questions with Details: {:.2f}%".format(qs_with_details / len(data) * 100))
+	print('')
+	print("Top 20 Topics:")
+	topic_counts = [(count, topic) for topic, count in topic_counts.items()]
+	topic_counts.sort()
+	for count, topic in topic_counts[::-1][:20]:
+		print("\t{}: {:.2f}%".format(topic, count / len(data) * 100))
