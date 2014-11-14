@@ -49,6 +49,8 @@ class ScrapeServer(socketserver.StreamRequestHandler):
 
 		if data['data']:
 			self.server.directory[data['url']] = data["data"]
+			with open(DIRECTORY_FILE, 'a') as f:
+				f.write(json.dumps({data['url'] : data["data"]}) + '\n')
 
 		for url in data['links']:
 			if url not in self.server.directory:
@@ -90,7 +92,12 @@ if __name__ == "__main__":
 
 	if os.path.isfile(DIRECTORY_FILE):
 		with open(DIRECTORY_FILE) as f:
-			server.directory = json.load(f)
+			data = f.read().strip().split('\n')
+			server.directory = {}
+			for entry in data:
+				entry = json.loads(entry)
+				key = entry.keys()[0]
+				server.directory[key] = entry[key]
 
 	if os.path.isfile(LINKS_FILE):
 		with open(LINKS_FILE) as f:
@@ -108,7 +115,5 @@ if __name__ == "__main__":
 		server.shutdown()
 		if not os.path.isdir(DATA_DIR):
 			os.mkdir(DATA_DIR)
-		with open(DIRECTORY_FILE, 'w') as f:
-			json.dump(server.directory, f)
 		with open(LINKS_FILE, 'w') as f:
 			json.dump(list(server.queue.queue), f)
