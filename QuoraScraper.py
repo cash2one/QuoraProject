@@ -20,10 +20,10 @@ logging.getLogger("requests").setLevel(logging.WARNING)
 
 class QuoraScraper:
 	SLEEP_TIME = 15
-	TIMEOUT = 120
+	TIMEOUT = 45
 	USER_AGENT = "QuoraScraper"
 
-	def __init__(self, wait=15, timeout=120):
+	def __init__(self, wait=15, timeout=45):
 		self.SLEEP_TIME = wait
 		self.TIMEOUT = timeout
 		# Set user-agent
@@ -121,8 +121,13 @@ class QuoraScraper:
 
 		logging.debug("\tWaiting for answers to load")
 		start = time()
+		num_questions = -1
 		while not self.driver.execute_script(funcs + check):
-			if(time() - start > self.TIMEOUT):
+			qs = self.driver.execute_script(funcs + "return getAnswers().length;")
+			if qs != num_questions:
+				num_questions = qs
+				start = time()
+			elif time() - start > self.TIMEOUT:
 				return None
 			sleep(1)
 
