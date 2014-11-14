@@ -35,6 +35,7 @@ if __name__ == '__main__':
 
 		avg_followers += url_data['data']['followers']
 
+	print("Number of Questions: {}".format(len(data)))
 	print("Average Number of Answers: {:.2f}".format(avg_answers / len(data)))
 	print("Average Number of Followers: {:.2f}".format(avg_followers / len(data)))
 	print("Percent Questions with Answers: {:.2f}%".format(qs_with_answers / len(data) * 100))
