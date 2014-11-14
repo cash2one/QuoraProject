@@ -8,6 +8,7 @@ import json
 import binascii
 import os
 import argparse
+from datetime import datetime
 from time import time
 
 import logging
@@ -62,7 +63,8 @@ logging.info("Connecting to {} on port {}".format(HOST, PORT))
 try:
 	url = getUrl(EMPTY_REQUEST)
 	while True:
-		logging.info("URL = {}".format(url))
+		ts = ts = datetime.now().strftime('%Y/%m/%d %H:%M:%S')
+		logging.info("[{}] URL = {}".format(ts, url))
 		t = int(time())
 		html = scraper.processUrl(url)
 		data = scraper.getQuestion(html)
