@@ -69,6 +69,9 @@ class QuoraScraper:
 			var count = document.getElementsByClassName('answer_count');
 			if(count.length) {
 				count = parseInt(count[0].textContent.split(" "));
+				if (isNaN(count)) {
+					count = 0
+				}
 			} else {
 				count = 0;
 			}
