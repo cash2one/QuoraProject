@@ -74,6 +74,8 @@ if __name__ == "__main__":
 		DATA_DIR = "data"
 	else:
 		DATA_DIR = args.output[0]
+	if not os.path.isdir(DATA_DIR):
+		os.mkdir(DATA_DIR)
 
 	DIRECTORY_FILE = DATA_DIR + '/directory.json'
 	LINKS_FILE = DATA_DIR + '/links.json'
@@ -116,7 +118,5 @@ if __name__ == "__main__":
 	finally:
 		logging.info("Shutting down server")
 		server.shutdown()
-		if not os.path.isdir(DATA_DIR):
-			os.mkdir(DATA_DIR)
 		with open(LINKS_FILE, 'w') as f:
 			json.dump(list(server.queue.queue), f)
