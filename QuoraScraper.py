@@ -201,9 +201,10 @@ class QuoraScraper:
 
 		# Other links
 		link_elements = parsed('.logged_out_related_questions_container a') + parsed('.SidebarTopicBestQuestions a')
-		links = []
+		links = set()
 		for e in link_elements:
-			links.append("http://www.quora.com" + e.attrib['href'])
+			links.add("http://www.quora.com" + e.attrib['href'])
+		links = list(links)
 
 		# Answers
 		logging.debug("\tLooping through answers")

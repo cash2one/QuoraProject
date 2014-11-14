@@ -55,7 +55,7 @@ class ScrapeServer(socketserver.StreamRequestHandler):
 				f.write(json.dumps({data['url'] : data["data"]}) + '\n')
 
 		for url in data['links']:
-			if url not in self.server.directory:
+			if url not in self.server.directory and url not in self.server.queue.queue:
 				self.server.queue.put(url)
 
 		if data['error']:
