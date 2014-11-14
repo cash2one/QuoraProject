@@ -9,7 +9,7 @@ else:
 	from urllib import quote
 
 import os
-from time import sleep
+from time import time, sleep
 
 from selenium import webdriver
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
@@ -20,11 +20,12 @@ logging.getLogger("requests").setLevel(logging.WARNING)
 
 class QuoraScraper:
 	SLEEP_TIME = 15
+	TIMEOUT = 120
 	USER_AGENT = "QuoraScraper"
 
-	def __init__(self, wait=15):
+	def __init__(self, wait=15, timeout=120):
 		SLEEP_TIME = wait
-
+		TIMEOUT = timeout
 		# Set user-agent
 		dcap = dict(DesiredCapabilities.PHANTOMJS)
 		dcap["phantomjs.page.settings.userAgent"] = self.USER_AGENT
@@ -116,7 +117,11 @@ class QuoraScraper:
 		self.driver.execute_script(funcs + scrollRepeat);
 
 		logging.debug("\tWaiting for answers to load")
-		while not self.driver.execute_script(funcs + check): pass
+		start = time()
+		while not self.driver.execute_script(funcs + check):
+			if(time() - start > self.TIMEOUT):
+				return None
+			sleep(1)
 
 		logging.debug("\tExpanding answers and comment chains")
 		self.driver.execute_script(funcs + clickOnStuff)
@@ -156,6 +161,9 @@ class QuoraScraper:
 
 	@classmethod
 	def getQuestion(cl, html):
+		if html is None:
+			return None
+
 		parsed = pq(html)
 
 		# Question
