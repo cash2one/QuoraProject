@@ -191,7 +191,7 @@ class QuoraScraper:
 		elif s.endswith('k'):
 			return int(float(s[:-1]) * 1000)
 		elif s.endswith('m'):
-			return int(float(s[:-1] * 1000000))
+			return int(float(s[:-1]) * 1000000)
 		else:
 			return int(s)
 
