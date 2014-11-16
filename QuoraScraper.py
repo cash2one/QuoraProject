@@ -14,9 +14,50 @@ from time import time, sleep
 from selenium import webdriver
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
+from lxml.etree import tostring
+
 import logging
 logging.getLogger("selenium").setLevel(logging.WARNING)
 logging.getLogger("requests").setLevel(logging.WARNING)
+
+
+############### Thanks to http://stackoverflow.com/a/3987802/1580190
+
+from HTMLParser import HTMLParser
+from re import sub
+
+class _DeHTMLParser(HTMLParser):
+    def __init__(self):
+        HTMLParser.__init__(self)
+        self.__text = []
+
+    def handle_data(self, data):
+        text = data.strip()
+        if len(text) > 0:
+            text = sub('[ \t\r\n]+', ' ', text)
+            self.__text.append(text + ' ')
+
+    def handle_starttag(self, tag, attrs):
+        if tag == 'p':
+            self.__text.append('\n\n')
+        elif tag == 'br':
+            self.__text.append('\n')
+
+    def handle_startendtag(self, tag, attrs):
+        if tag == 'br':
+            self.__text.append('\n\n')
+
+    def text(self):
+        return ''.join(self.__text).strip()
+
+
+def dehtml(text):
+    parser = _DeHTMLParser()
+    parser.feed(text)
+    parser.close()
+    return parser.text()
+
+#############
 
 class QuoraScraper:
 	SLEEP_TIME = 15
@@ -168,6 +209,24 @@ class QuoraScraper:
 			c += 1
 			sleep(cl.SLEEP_TIME)
 
+	@staticmethod
+	def getAnswerText(answer):
+			# TYPE-1 ANSWER
+			# Seen on http://www.quora.com/Would-human-blood-be-a-healthy-drink-for-humans
+			answer = answer.cssselect('.ExpandedAnswer')[0]
+			text = answer.cssselect('div > div > div')
+			# TYPE-1 ANSWER
+			if text:
+				answer_text = dehtml(tostring(text[0]))
+			# TYPE-2 ANSWER
+			else:
+				s = tostring(answer)
+				# Messy way to remove the footer div thrown in at the end, but I don't know of anything better
+				s = sub(r'<div class="ContentFooter AnswerFooter">.*', '', s)
+				answer_text = dehtml(s)
+
+			return answer_text
+
 	@classmethod
 	def getQuestion(cl, html):
 		if html is None:
@@ -179,10 +238,10 @@ class QuoraScraper:
 		question = parsed('div.question_text_edit > h1')
 		if not question:
 			question = parsed('h1.review_question_text')
-		question = question[0].text_content()
+		question = dehtml(tostring(question[0]))
 
 		# Question details
-		details = parsed('.question_details > div')[0].text_content()
+		details = dehtml(tostring(parsed('.question_details > div')[0]))
 
 		# Followers
 		followers = parsed('span.count')
@@ -213,23 +272,17 @@ class QuoraScraper:
 		answers = parsed('.Answer:not(.ActionBar)')
 		c = 0
 		for a in answers:
-
 			upvotes = cl.numToInt(a.cssselect('a.vote_item_link > span')[0].text_content())
 
-			answer_text = a.cssselect('div.TruncatedAnswer')
-			if answer_text:
-				author_info = a.cssselect('a.user')[0].attrib['href'][1:]
-				answer_text = answer_text[0].text_content()
+			author_info = a.cssselect('div.author_info > a')
+			if author_info:
+				author_info = author_info[0].get('href')[1:]
 			else:
-				author_info = a.cssselect('a.user')
-				if author_info:
-					author_info = a.cssselect('a.user')[0].get('href')[1:]
-				answer_text = a.cssselect('.ExpandedAnswer')[0]
-				child_divs = answer_text.cssselect('div > div')
-				if not child_divs:
-					answer_text = answer_text.text_content()
-				else:
-					answer_text = child_divs[0].text_content()
+				author_info = None # User is anonymous
+
+			answer_text = cl.getAnswerText(a)
+			if not answer_text:
+				logging.error("No answer text.")
 
 			answer_info.append({
 				'author'	: author_info,
