@@ -100,7 +100,7 @@ try:
 				logging.warn("No links on page.")
 
 		request = {
-			"links" : data['links'],
+			"links" : data['links'] if data else list(),
 			"url" : url,
 			"error" : error,
 			"data" : {

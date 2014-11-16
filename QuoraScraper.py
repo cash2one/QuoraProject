@@ -61,10 +61,10 @@ def dehtml(text):
 
 class QuoraScraper:
 	SLEEP_TIME = 15
-	TIMEOUT = 45
+	TIMEOUT = 60
 	USER_AGENT = "QuoraScraper"
 
-	def __init__(self, wait=15, timeout=45):
+	def __init__(self, wait=15, timeout=60):
 		self.SLEEP_TIME = wait
 		self.TIMEOUT = timeout
 		# Set user-agent
