@@ -5,12 +5,12 @@ if __name__ == '__main__':
 	import argparse
 
 	parser = argparse.ArgumentParser(description='Calculate stats for data.')
-	parser.add_argument('DIR', type=str, help="directory to read data from")
+	parser.add_argument('DIR', type=str, help="directory file to read data from")
 	parser.add_argument('-t', '--topic', type=str, nargs=1, help="only give stats for questions labled with this topic")
 	args = parser.parse_args()
 
 	main_topic = args.topic[0] if args.topic else None
-	with open(args.DIR + "/directory.json") as f:
+	with open(args.DIR) as f:
 		data = f.read()
 	data = data.strip().split('\n')
 	data = [json.loads(i) for i in data]
