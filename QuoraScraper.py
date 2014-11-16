@@ -21,41 +21,57 @@ logging.getLogger("selenium").setLevel(logging.WARNING)
 logging.getLogger("requests").setLevel(logging.WARNING)
 
 
-############### Thanks to http://stackoverflow.com/a/3987802/1580190
+############### Thanks to xperroni/bit4 from http://stackoverflow.com/questions/328356/extracting-text-from-html-file-using-python
 
 from HTMLParser import HTMLParser
-from re import sub
+from htmlentitydefs import name2codepoint
+import re
 
-class _DeHTMLParser(HTMLParser):
+class _HTMLToText(HTMLParser):
     def __init__(self):
         HTMLParser.__init__(self)
-        self.__text = []
-
-    def handle_data(self, data):
-        text = data.strip()
-        if len(text) > 0:
-            text = sub('[ \t\r\n]+', ' ', text)
-            self.__text.append(text + ' ')
+        self._buf = []
+        self.hide_output = False
 
     def handle_starttag(self, tag, attrs):
-        if tag == 'p':
-            self.__text.append('\n\n')
-        elif tag == 'br':
-            self.__text.append('\n')
+        if tag in ('p', 'br') and not self.hide_output:
+            self._buf.append('\n')
+        elif tag in ('script', 'style'):
+            self.hide_output = True
 
     def handle_startendtag(self, tag, attrs):
         if tag == 'br':
-            self.__text.append('\n\n')
+            self._buf.append('\n')
 
-    def text(self):
-        return ''.join(self.__text).strip()
+    def handle_endtag(self, tag):
+        if tag == 'p':
+            self._buf.append('\n')
+        elif tag in ('script', 'style'):
+            self.hide_output = False
+
+    def handle_data(self, text):
+        if text and not self.hide_output:
+            self._buf.append(re.sub(r'\s+', ' ', text))
+
+    def handle_entityref(self, name):
+        if name in name2codepoint and not self.hide_output:
+            c = unichr(name2codepoint[name])
+            self._buf.append(c)
+
+    def handle_charref(self, name):
+        if not self.hide_output:
+            n = int(name[1:], 16) if name.startswith('x') else int(name)
+            self._buf.append(unichr(n))
+
+    def get_text(self):
+        return re.sub(r' +', ' ', ''.join(self._buf))
 
 
 def dehtml(text):
-    parser = _DeHTMLParser()
+    parser = _HTMLToText()
     parser.feed(text)
     parser.close()
-    return parser.text()
+    return parser.get_text()
 
 #############
 
@@ -222,7 +238,7 @@ class QuoraScraper:
 			else:
 				s = tostring(answer)
 				# Messy way to remove the footer div thrown in at the end, but I don't know of anything better
-				s = sub(r'<div class="ContentFooter AnswerFooter">.*', '', s)
+				s = re.sub(r'<div class="ContentFooter AnswerFooter">.*', '', s)
 				answer_text = dehtml(s)
 
 			return answer_text
