@@ -111,7 +111,7 @@ if __name__ == "__main__":
 	if os.path.isfile(LINKS_FILE):
 		with open(LINKS_FILE) as f:
 			for url in json.load(f):
-				server.queue.put(quote(url))
+				server.queue.put(url)
 	##########################################
 
 	try:
