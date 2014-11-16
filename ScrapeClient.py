@@ -95,8 +95,10 @@ try:
 			fn = '{}/{}_{}.out'.format(OUTPUT_DIRECTORY, t, hashed_url)
 			with open(fn, 'w') as f:
 				json.dump(output, f)
-		if not data['links']:
-			logging.warn("No links on page.")
+
+			if not data['links']:
+				logging.warn("No links on page.")
+
 		request = {
 			"links" : data['links'],
 			"url" : url,
