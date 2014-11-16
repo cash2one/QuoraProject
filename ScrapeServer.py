@@ -63,7 +63,9 @@ class ScrapeServer(socketserver.StreamRequestHandler):
 			self.logError(data['url'])
 
 		self.checkQueue()
-		self.wfile.write((random.sample(self.server.urls_to_use, 1)[0] + '\n ').encode('utf-8'))
+		return_url = random.sample(self.server.urls_to_use, 1)[0]
+		self.server.urls_to_use.remove(return_url)
+		self.wfile.write(return_url + '\n ').encode('utf-8'))
 
 if __name__ == "__main__":
 	import argparse
