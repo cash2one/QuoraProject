@@ -75,7 +75,7 @@ class QuoraScraper:
 			} else {
 				count = 0;
 			}
-			return getAnswers().length == count;
+			return getAnswers().length >= count;
 		}
 		function scroll() {
 			var elms = document.getElementsByClassName('pager_next');
@@ -128,6 +128,7 @@ class QuoraScraper:
 				num_questions = qs
 				start = time()
 			elif time() - start > self.TIMEOUT:
+				logging.error("TIMEOUT")
 				return None
 			sleep(1)
 
