@@ -4,9 +4,11 @@ VERSION = sys.version_info[0]
 if VERSION == 3:
 	import socketserver
 	from queue import Queue
+	from urllib.parse import quote
 else:
 	import SocketServer as socketserver
 	from Queue import Queue
+	from urllib import quote
 
 import socket
 import json
@@ -109,7 +111,7 @@ if __name__ == "__main__":
 	if os.path.isfile(LINKS_FILE):
 		with open(LINKS_FILE) as f:
 			for url in json.load(f):
-				server.queue.put(url)
+				server.queue.put(quote(url))
 	##########################################
 
 	try:
