@@ -3,17 +3,16 @@ VERSION = sys.version_info[0]
 
 if VERSION == 3:
 	import socketserver
-	from queue import Queue
 	from urllib.parse import quote
 else:
 	import SocketServer as socketserver
-	from Queue import Queue
 	from urllib import quote
 
 import socket
 import json
 import os.path
 import itertools
+import random
 from datetime import datetime
 
 import logging
@@ -33,11 +32,11 @@ class ScrapeServer(socketserver.StreamRequestHandler):
 			f.write(url + '\n')
 
 	def checkQueue(self):
-		if self.server.queue.empty():
+		if len(server.urls_to_use) == 0:
 			c = 0
 			for i in self.server.urlGen:
 				if not i in self.server.directory:
-					self.server.queue.put(i)
+					self.server.urls_to_use.add(i)
 					c += 1
 				if c >= self.QUEUE_REFILL:
 					break
@@ -57,14 +56,14 @@ class ScrapeServer(socketserver.StreamRequestHandler):
 				f.write(json.dumps({data['url'] : data["data"]}) + '\n')
 
 		for url in data['links']:
-			if url not in self.server.directory and url not in self.server.queue.queue:
-				self.server.queue.put(url)
+			if url not in self.server.directory:
+				self.server.urls_to_use.add(url)
 
 		if data['error']:
 			self.logError(data['url'])
 
 		self.checkQueue()
-		self.wfile.write((self.server.queue.get() + '\n ').encode('utf-8'))
+		self.wfile.write((random.sample(self.server.urls_to_use, 1)[0] + '\n ').encode('utf-8'))
 
 if __name__ == "__main__":
 	import argparse
@@ -93,7 +92,7 @@ if __name__ == "__main__":
 
 	### ADD GLOBAL DATA TO SERVER INSTANCE ###
 	server.directory = {}
-	server.queue = Queue()
+	server.urls_to_use = set()
 	server.urlGen = QuoraScraper.getQuestionPage()
 
 	if os.path.isfile(DIRECTORY_FILE):
@@ -111,7 +110,7 @@ if __name__ == "__main__":
 	if os.path.isfile(LINKS_FILE):
 		with open(LINKS_FILE) as f:
 			for url in json.load(f):
-				server.queue.put(url)
+				server.urls_to_use.add(url)
 	##########################################
 
 	try:
@@ -123,4 +122,4 @@ if __name__ == "__main__":
 		logging.info("Shutting down server")
 		server.shutdown()
 		with open(LINKS_FILE, 'w') as f:
-			json.dump(list(server.queue.queue), f)
+			json.dump(list(server.urls_to_use), f)
