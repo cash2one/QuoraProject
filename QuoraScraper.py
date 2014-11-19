@@ -260,7 +260,7 @@ class QuoraScraper:
 		details = dehtml(tostring(parsed('.question_details > div')[0]))
 
 		# Followers
-		followers = parsed('span.count')
+		followers = parsed('.follow_button .no_count') + parsed('.follow_button .count')
 		if followers:
 			followers = cl.numToInt(followers[0].text_content())
 		else:
