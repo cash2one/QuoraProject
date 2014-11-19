@@ -96,6 +96,7 @@ class QuoraScraper:
 
 	def close(self):
 		self.driver.close()
+		self.driver.quit()
 
 	def processUrl(self, url):
 		# Scraping breaks if https url is used
