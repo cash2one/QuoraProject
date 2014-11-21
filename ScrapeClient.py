@@ -67,6 +67,7 @@ try:
 		logging.info("[{}] URL = {}".format(ts, url))
 		t = int(time())
 		html = scraper.processUrl(url)
+		log = scraper.processLog(url)
 		data = scraper.getQuestion(html)
 
 		error = False
@@ -84,6 +85,7 @@ try:
 				compressed_html = binascii.b2a_hex(compressed_html).decode('utf-8')
 			output = {
 				"html"	: compressed_html,
+				"question_info": log,
 				"data"	: data,
 				"time"	: t,
 				"url"	: url

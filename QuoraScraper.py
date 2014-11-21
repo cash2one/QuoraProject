@@ -1,7 +1,11 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
 import sys
 VERSION = sys.version_info[0]
 
 from pyquery import PyQuery as pq
+from datetime import datetime, timedelta
 
 if VERSION == 3:
 	from urllib.parse import quote
@@ -9,6 +13,7 @@ else:
 	from urllib import quote
 
 import os
+import re
 from time import time, sleep
 
 from selenium import webdriver
@@ -80,6 +85,68 @@ class QuoraScraper:
 	TIMEOUT = 60
 	USER_AGENT = "QuoraScraper"
 
+	funcs = '''
+		function getAnswers() {
+			var t_answers = document.getElementsByClassName('AnswerHeader');
+			var answers = [];
+			for(var i = 0; i < t_answers.length; i++) {
+				if(t_answers[i].parentElement.parentElement.parentElement.className != "feed_item_content_related_question") {
+					answers.push(t_answers[i]);
+				}
+			}
+			return answers;
+		}
+		function isLoaded() {
+			var count = document.getElementsByClassName('answer_count');
+			if(count.length) {
+				count = parseInt(count[0].textContent.split(" "));
+				if (isNaN(count)) {
+					count = 0
+				}
+			} else {
+				count = 0;
+			}
+			return getAnswers().length >= count;
+		}
+		function scroll() {
+			var elms = document.getElementsByClassName('pager_next');
+			for(var i = 0; i < elms.length; i++) {
+				simulateClick(elms[i]);
+			}
+		}
+		function simulateClick(el) {
+			var evt;
+			if (document.createEvent) {
+				evt = document.createEvent("MouseEvents");
+				evt.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+			}
+			(evt) ? el.dispatchEvent(evt) : (el.click && el.click());
+		}
+		function getLastElement() {
+			var els = document.getElementsByClassName('LogOperation');
+			var e = els[els.length - 1];
+			return e;
+		}
+		function isLoadedLast() {
+			return getLastElement().children[0].children[0].innerHTML.startsWith("Question added by");
+		}
+		function getTime() {
+			return getLastElement().children[0].children[2].textContent.split('•')[1].trim();
+		}
+		function getRevision() {
+			var elms = getLastElement().children;
+			return elms[elms.length - 1].textContent;
+		}
+		function getAuthor() {
+			var e = getLastElement().children[0].children[0].children[1];
+			if(e) {
+				return e.attributes['href'].value;
+			} else {
+				return undefined;
+			}
+		}
+	'''
+
 	def __init__(self, wait=15, timeout=60):
 		self.SLEEP_TIME = wait
 		self.TIMEOUT = timeout
@@ -112,45 +179,6 @@ class QuoraScraper:
 		if self.driver.find_elements_by_id('ErrorMain'):
 			return None
 
-		funcs = '''
-		function getAnswers() {
-			var t_answers = document.getElementsByClassName('AnswerHeader');
-			var answers = [];
-			for(var i = 0; i < t_answers.length; i++) {
-				if(t_answers[i].parentElement.parentElement.parentElement.className != "feed_item_content_related_question") {
-					answers.push(t_answers[i]);
-				}
-			}
-			return answers;
-		}
-		function isLoaded() {
-			var count = document.getElementsByClassName('answer_count');
-			if(count.length) {
-				count = parseInt(count[0].textContent.split(" "));
-				if (isNaN(count)) {
-					count = 0
-				}
-			} else {
-				count = 0;
-			}
-			return getAnswers().length >= count;
-		}
-		function scroll() {
-			var elms = document.getElementsByClassName('pager_next');
-			for(var i = 0; i < elms.length; i++) {
-				simulateClick(elms[i]);
-			}
-		}
-		function simulateClick(el) {
-				var evt;
-				if (document.createEvent) {
-					evt = document.createEvent("MouseEvents");
-					evt.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
-				}
-				(evt) ? el.dispatchEvent(evt) : (el.click && el.click());
-			}
-		'''
-
 		scrollRepeat = '''
 		var rep = setInterval(function() {
 			if(!isLoaded()) {
@@ -175,13 +203,13 @@ class QuoraScraper:
 		'''
 
 		logging.debug("\tExecuting main script")
-		self.driver.execute_script(funcs + scrollRepeat);
+		self.driver.execute_script(self.funcs + scrollRepeat);
 
 		logging.debug("\tWaiting for answers to load")
 		start = time()
 		num_questions = -1
-		while not self.driver.execute_script(funcs + check):
-			qs = self.driver.execute_script(funcs + "return getAnswers().length;")
+		while not self.driver.execute_script(self.funcs + check):
+			qs = self.driver.execute_script(self.funcs + "return getAnswers().length;")
 			if qs != num_questions:
 				num_questions = qs
 				start = time()
@@ -191,13 +219,84 @@ class QuoraScraper:
 			sleep(1)
 
 		logging.debug("\tExpanding answers and comment chains")
-		self.driver.execute_script(funcs + clickOnStuff)
+		self.driver.execute_script(self.funcs + clickOnStuff)
 
 		# Sleep before next request
 		logging.debug("\tSleeping")
 		sleep(self.SLEEP_TIME)
 
 		return self.driver.page_source
+
+	def processLog(self, url):
+		url += '/log'
+
+		# Scraping breaks if https url is used
+		if url.startswith('https'):
+			logging.warn('URL started with "https", replacing with "http"')
+			url = url.replace('https', 'http', 1)
+
+		logging.debug("\tLoading log page")
+		self.driver.delete_all_cookies()
+		self.driver.get(url)
+
+		logging.debug("\tChecking if error page")
+		if self.driver.find_elements_by_id('ErrorMain'):
+			return None
+
+		scrollRepeat = '''
+		var rep = setInterval(function() {
+			if(!isLoadedLast()) {
+				scroll();
+			} else {
+				clearInterval(rep);
+			}
+		}, 500);
+		'''
+
+		check = 'return isLoadedLast();'
+
+		logging.debug("\tExecuting main script")
+		self.driver.execute_script(self.funcs + scrollRepeat);
+
+		logging.debug("\tWaiting for answers to load")
+		start = time()
+		revision = -1
+		while not self.driver.execute_script(self.funcs + check):
+			new_revision = self.driver.execute_script(self.funcs + "return getRevision();")
+			if new_revision != revision:
+				revision = new_revision
+				start = time()
+			elif time() - start > self.TIMEOUT:
+				logging.error("TIMEOUT")
+				return None
+			sleep(1)
+		date = self.processDate(self.driver.execute_script(self.funcs + "return getTime();"))
+		author = self.driver.execute_script(self.funcs + "return getAuthor();")
+		if author:
+			author = author[1:]
+		ret = {
+			"date" : date,
+			"author" : author
+		}
+
+		# Sleep before next request
+		logging.debug("\tSleeping")
+		sleep(self.SLEEP_TIME)
+
+		return ret
+
+	@staticmethod
+	def processDate(s):
+		# Type 1, e.g. 14d ago
+		d = re.findall(r'(\d{1,2})d ago', s)
+		if d:
+			date = (datetime.now() - timedelta(days=int(d[0]))).replace(hour=0, minute=0, second=0, microsecond=0)
+		else:
+			if not ',' in s:
+				s += ', {}'.format(datetime.now().year)
+			date = datetime.strptime(s, '%d %b, %Y')
+		date = int((date - datetime(1970,1,1)).total_seconds())
+		return date
 
 	@staticmethod
 	def numToInt(s):
@@ -350,14 +449,21 @@ if __name__ == '__main__':
 	parser.add_argument('url', type=str, nargs=1, help='url to scrape')
 	url = parser.parse_args().url[0]
 
+	# Scraping breaks if https url is used
+	if url.startswith('https'):
+		logging.warn('URL started with "https", replacing with "http"')
+		url = url.replace('https', 'http', 1)
+
 	try:
 		scraper = QuoraScraper(wait=0) # No need to sleep since we're only loading one page
 		html = scraper.processUrl(url)
+		log = scraper.processLog(url)
 		data = scraper.getQuestion(html)
 		print("{}:".format(url))
 		if data is None:
 			print("ERROR")
 		else:
+			pprint(log)
 			pprint(data)
 	finally:
 		scraper.close()
