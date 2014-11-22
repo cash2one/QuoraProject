@@ -58,6 +58,26 @@ def getUrl(data):
 
 	return url
 
+def writeFile(url, output):
+	if not os.path.isdir(OUTPUT_DIRECTORY):
+		os.mkdir(OUTPUT_DIRECTORY)
+	hashed_url = hashlib.md5(url.encode('utf-8')).hexdigest()
+	fn = '{}/{}_{}.out'.format(OUTPUT_DIRECTORY, t, hashed_url)
+	with open(fn, 'w') as f:
+		json.dump(output, f)
+	return fn
+
+def compressHTML(html):
+	if VERSION == 3:
+		compressed_html = binascii.b2a_hex(gzip.compress(bytes(html, 'utf-8'))).decode('utf-8')
+	else:
+		out = StringIO()
+		with gzip.GzipFile(fileobj=out, mode="w") as f:
+			f.write(html.encode('utf-8'))
+		compressed_html = out.getvalue()
+		compressed_html = binascii.b2a_hex(compressed_html).decode('utf-8')
+	return compressed_html
+
 scraper = QuoraScraper(args.wait)
 logging.info("Connecting to {} on port {}".format(HOST, PORT))
 try:
@@ -66,50 +86,53 @@ try:
 		ts = ts = datetime.now().strftime('%Y/%m/%d %H:%M:%S')
 		logging.info("[{}] URL = {}".format(ts, url))
 		t = int(time())
-		html = scraper.processUrl(url)
-		log = scraper.processLog(url)
-		data = scraper.getQuestion(html)
+
+		html, log, data = None, None, None
+		try:
+			html = scraper.processUrl(url)
+			try:
+				log = scraper.processLog(url)
+				data = scraper.getQuestion(html)
+			except Exception as e:
+				logging.error(e)
+		except Exception as e:
+			logging.error("Unable to get HTML: {}".format(e))
 
 		error = False
-		if data is None:
+		if not all([html, log, data]):
 			error = True
-			data = False
-		else:
-			if VERSION == 3:
-				compressed_html = binascii.b2a_hex(gzip.compress(bytes(html, 'utf-8'))).decode('utf-8')
-			else:
-				out = StringIO()
-				with gzip.GzipFile(fileobj=out, mode="w") as f:
-					f.write(html.encode('utf-8'))
-				compressed_html = out.getvalue()
-				compressed_html = binascii.b2a_hex(compressed_html).decode('utf-8')
+		if html:
+			compressed_html = compressHTML(html)
 			output = {
 				"html"	: compressed_html,
-				"question_info": log,
-				"data"	: data,
 				"time"	: t,
 				"url"	: url
 			}
+			if data:
+				output['data'] = data
+				if not data['links']:
+					logging.warn("No links on page.")
+			if log:
+				output['log'] = log
 
-			if not os.path.isdir(OUTPUT_DIRECTORY):
-				os.mkdir(OUTPUT_DIRECTORY)
-			hashed_url = hashlib.md5(url.encode('utf-8')).hexdigest()
-			fn = '{}/{}_{}.out'.format(OUTPUT_DIRECTORY, t, hashed_url)
-			with open(fn, 'w') as f:
-				json.dump(output, f)
+			fn = writeFile(url, output)
 
-			if not data['links']:
-				logging.warn("No links on page.")
-
-		request = {
-			"links" : data['links'] if data else list(),
-			"url" : url,
-			"error" : error,
-			"data" : {
-				"time" : t,
-				"path" : os.path.abspath(fn)
+			request = {
+				"links" : data['links'] if data else list(),
+				"url" : url,
+				"error" : error,
+				"data" : {
+					"time" : t,
+					"path" : os.path.abspath(fn)
+				}
 			}
-		}
+		else:
+			request = {
+				'links'	: None,
+				'url'	: url,
+				'error'	: error,
+				'data'	: None
+			}
 		url = getUrl(request)
 
 except ConnectionRefusedError:
