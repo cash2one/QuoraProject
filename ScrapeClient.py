@@ -24,7 +24,7 @@ parser = argparse.ArgumentParser(description='Start Quora scraping client.')
 parser.add_argument('HOST', type=str, default="localhost", nargs='?', help='address of server')
 parser.add_argument('PORT', type=int, default=9999, nargs='?', help='port server is listening on')
 parser.add_argument('-o', '--output', type=str, default=None, nargs=1, help="directory to write output to")
-parser.add_argument('-t', '--wait', type=int, default=15, nargs=1, help="how long to wait between requets")
+parser.add_argument('-t', '--wait', type=int, default=7, nargs=1, help="how long to wait between requets")
 args = parser.parse_args()
 
 HOST = args.HOST
@@ -94,9 +94,11 @@ try:
 				log = scraper.processLog(url)
 				data = scraper.getQuestion(html)
 			except Exception as e:
+				logging.error("Bad processing:")
 				logging.error(e)
 		except Exception as e:
-			logging.error("Unable to get HTML: {}".format(e))
+			logging.error("Unable to get HTML:")
+			logging.error(e)
 
 		error = False
 		if not all([html, log, data]):
@@ -128,7 +130,7 @@ try:
 			}
 		else:
 			request = {
-				'links'	: None,
+				'links'	: list(),
 				'url'	: url,
 				'error'	: error,
 				'data'	: None

@@ -21,6 +21,7 @@ from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
 from lxml.etree import tostring
 
+import numpy
 import logging
 logging.getLogger("selenium").setLevel(logging.WARNING)
 logging.getLogger("requests").setLevel(logging.WARNING)
@@ -81,7 +82,7 @@ def dehtml(text):
 #############
 
 class QuoraScraper:
-	SLEEP_TIME = 15
+	SLEEP_TIME = 7
 	TIMEOUT = 60
 	USER_AGENT = "QuoraScraper"
 
@@ -147,7 +148,7 @@ class QuoraScraper:
 		}
 	'''
 
-	def __init__(self, wait=15, timeout=60):
+	def __init__(self, wait=7, timeout=60):
 		self.SLEEP_TIME = wait
 		self.TIMEOUT = timeout
 		# Set user-agent
@@ -160,6 +161,15 @@ class QuoraScraper:
 
 		# Disable the loading of images
 		self.driver = webdriver.PhantomJS(executable_path=ex_path, service_log_path='/dev/null', service_args=['--load-images=no'], desired_capabilities=dcap)
+
+	@staticmethod
+	def wait(SLEEP_TIME):
+		if SLEEP_TIME:
+			t = numpy.random.gamma(SLEEP_TIME * 2, 0.5)
+		else:
+			t = 0
+
+		sleep(t)
 
 	def close(self):
 		self.driver.close()
@@ -223,7 +233,7 @@ class QuoraScraper:
 
 		# Sleep before next request
 		logging.debug("\tSleeping")
-		sleep(self.SLEEP_TIME)
+		self.wait(self.SLEEP_TIME)
 
 		return self.driver.page_source
 
@@ -281,7 +291,7 @@ class QuoraScraper:
 
 		# Sleep before next request
 		logging.debug("\tSleeping")
-		sleep(self.SLEEP_TIME)
+		self.wait(self.SLEEP_TIME)
 
 		return ret
 
@@ -323,7 +333,7 @@ class QuoraScraper:
 				url = 'http://' + quote(url)
 				yield url
 			c += 1
-			sleep(cl.SLEEP_TIME)
+			cl.wait(cl.SLEEP_TIME)
 
 	@staticmethod
 	def getAnswerText(answer):
@@ -435,7 +445,7 @@ class QuoraScraper:
 		}
 
 		# Sleep before next request
-		sleep(cl.SLEEP_TIME)
+		cl.wait(cl.SLEEP_TIME)
 
 		return ret
 
