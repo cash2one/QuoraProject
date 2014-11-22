@@ -22,12 +22,14 @@ if __name__ == '__main__':
 	qs_with_details = 0
 	topic_counts = {}
 	main_topic_count = 0
+	avg_size = 0
 
 	for entry in data:
 		key = entry.keys()[0]
 		fn = entry[key]['path']
 		with open(fn) as f:
 			url_data = json.load(f)
+		avg_size += len(json.dumps(url_data))
 		url_data['data']['topics'] = [i[1:] for i in url_data['data']['topics']]
 		if not main_topic or main_topic in url_data['data']['topics']:
 			main_topic_count += 1
@@ -49,6 +51,7 @@ if __name__ == '__main__':
 	print("Number of Questions: {}".format(len(data)))
 	if main_topic:
 		print("Number of Questions Labled With {}: {}".format(main_topic, main_topic_count))
+	print('\tAverage Size: {:.2f}kB'.format(avg_size / len(data) / 1000))
 	print("\tAverage Number of Answers: {:.2f}".format(avg_answers / len(data)))
 	print("\tAverage Number of Followers: {:.2f}".format(avg_followers / len(data)))
 	print("\tPercent Questions with Answers: {:.2f}%".format(qs_with_answers / len(data) * 100))
