@@ -19,11 +19,16 @@ data = [list(json.loads(i).values())[0]['path'] for i in data.strip().split('\n'
 hist = []
 for fn in data:
 	with open(fn) as f:
-		ans = len(json.load(f)['data']['answers'])
-		if ans > MAX:
-			ans = MAX
-		hist.append(ans)
+		try:
+			ans = len(json.load(f)['data']['answers'])
 
+			if ans > MAX:
+				ans = MAX
+			hist.append(ans)
+		except KeyError:
+			continue
+
+print(np.bincount(hist))
 
 fig, ax = plt.subplots()
 
