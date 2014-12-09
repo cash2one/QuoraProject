@@ -1,7 +1,9 @@
 import json
-from matplotlib import  pyplot as plt
 from sys import argv
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 
 MAX = 100
 LABEL_INT = 10
@@ -22,7 +24,9 @@ for fn in data:
 			ans = MAX
 		hist.append(ans)
 
+
 fig, ax = plt.subplots()
+
 bins = list(range(0, MAX+1, LABEL_INT))
 ax.hist(hist, bins=MAX, range=(0, MAX))
 
@@ -35,4 +39,5 @@ ax.set_xticklabels(xlabels)
 ax.set_title("Number of Answers to Questions on Quora")
 ax.set_ylabel("Count")
 ax.set_xlabel("Number of Answers")
-plt.show()
+
+plt.savefig("answer_hist.pdf")
