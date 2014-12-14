@@ -33,7 +33,7 @@ def moveFile(path, out):
 	if not os.path.exists(DAY_DIR):
 		os.mkdir(DAY_DIR)
 
-	shutil.copy(path, os.path.join(DAY_DIR, fn))
+	shutil.move(path, os.path.join(DAY_DIR, fn))
 
 
 if __name__ == '__main__':
