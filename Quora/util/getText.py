@@ -2,22 +2,26 @@ import os
 import json
 
 def getText(DIR):
-	'''Takes directory file and returns raw question and answer text'''
-	question_text = []
-	answer_text = []
+	'''Takes directory and returns raw question and answer text'''
 	for fn in os.listdir(DIR):
-		try:
-			with open(os.path.join(DIR, fn)) as f:
+		joined = os.path.join(DIR, fn)
+
+		if os.path.isdir(joined):
+			for entry in getText(joined):
+				yield entry
+		elif fn.endswith('.out'):
+			with open(joined) as f:
 				data = json.load(f)
+			if not 'data' in data:
+				continue
 
 			text = data['data']['question'].replace(u'\u00a0', ' ').encode('utf-8').strip()
-			question_text.append(text)
+			question_text = text
+			answers = []
 			for ans in data['data']['answers']:
 				text = ans['text'].replace(u'\u00a0', ' ').encode('utf-8').strip()
-				answer_text.append(text)
-		except KeyError:
-			if DEBUG: print(fn)
-	return (question_text, answer_text)
+				answers.append(text)
+			yield (question_text, answers)
 
 DEBUG = True
 
@@ -26,10 +30,16 @@ if __name__ == '__main__':
 
 	DIR = argv[1]
 
-	question_text, answer_text = getText(DIR)
+	text = getText(DIR)
+	question_text = []
+	answer_text = []
+	for entry in text:
+		question_text.append(entry[0])
+		for answer in entry[1]:
+			answer_text.append(answer)
 
-	with open(os.path.join(DIR, 'question_text.txt'), 'w') as f:
+	with open('question_text.txt', 'w') as f:
 		json.dump(question_text, f)
 
-	with open(os.path.join(DIR, 'answer_text.txt'), 'w') as f:
+	with open('answer_text.txt', 'w') as f:
 		json.dump(answer_text, f)
