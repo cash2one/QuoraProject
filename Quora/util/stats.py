@@ -9,7 +9,9 @@ if __name__ == '__main__':
 	parser.add_argument('-t', '--topic', type=str, nargs=1, help="only give stats for questions labled with this topic")
 	args = parser.parse_args()
 
+	# Conditioned topic
 	main_topic = args.topic[0] if args.topic else None
+
 	with open(args.DIR) as f:
 		data = f.read()
 	data = data.strip().split('\n')
@@ -30,22 +32,30 @@ if __name__ == '__main__':
 		fn = entry[key]['path']
 		with open(fn) as f:
 			url_data = json.load(f)
+
+		# Size based on string length
 		avg_size += len(json.dumps(url_data))
+
 		url_data['data']['topics'] = [i[1:] for i in url_data['data']['topics']]
 		if not main_topic or main_topic in url_data['data']['topics']:
 			main_topic_count += 1
+
+			# Answers
 			num_answers = len(url_data['data']['answers'])
 			if num_answers != 0:
 				qs_with_answers += 1
 				avg_answers += num_answers
 
+			# Details
 			if url_data['data']['details']:
 				qs_with_details += 1
 				if num_answers != 0:
 					details_w_ans += 1
 
+			# Followers
 			avg_followers += url_data['data']['followers']
 
+			# Topics
 			for topic in url_data['data']['topics']:
 				if topic not in topic_counts:
 					topic_counts[topic] = 0
@@ -65,6 +75,7 @@ if __name__ == '__main__':
 	topic_counts = [(count, topic) for topic, count in topic_counts.items()]
 	topic_counts.sort()
 
+	# Top topics
 	if main_topic:
 		print("Percent of Questions with the Topic of {}: {:.2f}%".format(main_topic, main_topic_count / len(data) * 100))
 		print("Top 20 Topics Co-Labled With {}:".format(main_topic))

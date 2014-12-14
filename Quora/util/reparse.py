@@ -3,7 +3,17 @@ from gzip import GzipFile
 from binascii import a2b_hex
 from StringIO import StringIO
 from sys import argv
-from QuoraScraper import QuoraScraper
+from Quora.QuoraScraper import QuoraScraper
+
+def reparse(fn):
+	'''Reparses question from stored HTML'''
+	with open(fn) as f:
+		entry = json.load(f)
+		html_data = GzipFile(fileobj=StringIO(a2b_hex(entry['html']))).read()
+		reparsed = QuoraScraper.getQuestion(html_data)
+		entry['data'] = reparsed
+		with open(fn, 'w') as f:
+			json.dump(entry, f)	
 
 if __name__ == '__main__':
 	fn = "data/directory.json"
@@ -15,11 +25,4 @@ if __name__ == '__main__':
 	data = [json.loads(i) for i in data.strip().split('\n')]
 	for i in data:
 		fn = list(i.values())[0]['path']
-		print(fn)
-		with open(fn) as f:
-			entry = json.load(f)
-		html_data = GzipFile(fileobj=StringIO(a2b_hex(entry['html']))).read()
-		reparsed = QuoraScraper.getQuestion(html_data)
-		entry['data'] = reparsed
-		with open(fn, 'w') as f:
-			json.dump(entry, f)
+		reparse(fn)

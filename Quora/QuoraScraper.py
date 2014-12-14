@@ -34,59 +34,66 @@ from htmlentitydefs import name2codepoint
 import re
 
 class _HTMLToText(HTMLParser):
-    def __init__(self):
-        HTMLParser.__init__(self)
-        self._buf = []
-        self.hide_output = False
+	def __init__(self):
+		HTMLParser.__init__(self)
+		self._buf = []
+		self.hide_output = False
 
-    def handle_starttag(self, tag, attrs):
-        if tag in ('p', 'br') and not self.hide_output:
-            self._buf.append('\n')
-        elif tag in ('script', 'style'):
-            self.hide_output = True
+	def handle_starttag(self, tag, attrs):
+		# <p> and <br> add newline
+		if tag in ('p', 'br') and not self.hide_output:
+			self._buf.append('\n')
+		elif tag in ('script', 'style'):
+			self.hide_output = True
 
-    def handle_startendtag(self, tag, attrs):
-        if tag == 'br':
-            self._buf.append('\n')
+	def handle_startendtag(self, tag, attrs):
+		if tag == 'br':
+			self._buf.append('\n')
 
-    def handle_endtag(self, tag):
-        if tag == 'p':
-            self._buf.append('\n')
-        elif tag in ('script', 'style'):
-            self.hide_output = False
+	def handle_endtag(self, tag):
+		if tag == 'p':
+			self._buf.append('\n')
+		elif tag in ('script', 'style'):
+			self.hide_output = False
 
-    def handle_data(self, text):
-        if text and not self.hide_output:
-            self._buf.append(re.sub(r'\s+', ' ', text))
+	def handle_data(self, text):
+		if text and not self.hide_output:
+			self._buf.append(re.sub(r'\s+', ' ', text))
 
-    def handle_entityref(self, name):
-        if name in name2codepoint and not self.hide_output:
-            c = unichr(name2codepoint[name])
-            self._buf.append(c)
+	def handle_entityref(self, name):
+		if name in name2codepoint and not self.hide_output:
+			c = unichr(name2codepoint[name])
+			self._buf.append(c)
 
-    def handle_charref(self, name):
-        if not self.hide_output:
-            n = int(name[1:], 16) if name.startswith('x') else int(name)
-            self._buf.append(unichr(n))
+	def handle_charref(self, name):
+		if not self.hide_output:
+			n = int(name[1:], 16) if name.startswith('x') else int(name)
+			self._buf.append(unichr(n))
 
-    def get_text(self):
-        return re.sub(r' +', ' ', ''.join(self._buf))
+	def get_text(self):
+		return re.sub(r' +', ' ', ''.join(self._buf))
 
 
 def dehtml(text):
-    parser = _HTMLToText()
-    parser.feed(text)
-    parser.close()
-    return parser.get_text()
+	'''Takes HTML and returns a plain-text string representation'''
+	parser = _HTMLToText()
+	parser.feed(text)
+	parser.close()
+	return parser.get_text()
 
 #############
 
 class QuoraScraper:
+	'''Scrapes and parses data from Quora.com'''
+	# These values may be changed for a specific instance
 	SLEEP_TIME = 7
 	TIMEOUT = 60
+
 	USER_AGENT = "QuoraScraper"
 
+	# Javascript functions used in headless browser
 	funcs = '''
+		// Returns all answers loaded on page
 		function getAnswers() {
 			var t_answers = document.getElementsByClassName('AnswerHeader');
 			var answers = [];
@@ -97,6 +104,7 @@ class QuoraScraper:
 			}
 			return answers;
 		}
+		// Determines if number of loaded answers matches count at top of page
 		function isLoaded() {
 			var count = document.getElementsByClassName('answer_count');
 			if(count.length) {
@@ -109,12 +117,14 @@ class QuoraScraper:
 			}
 			return getAnswers().length >= count;
 		}
+		// Scrolls to bottom of page
 		function scroll() {
 			var elms = document.getElementsByClassName('pager_next');
 			for(var i = 0; i < elms.length; i++) {
 				simulateClick(elms[i]);
 			}
 		}
+		// Clicks an element (replacement for jQuery)
 		function simulateClick(el) {
 			var evt;
 			if (document.createEvent) {
@@ -123,21 +133,26 @@ class QuoraScraper:
 			}
 			(evt) ? el.dispatchEvent(evt) : (el.click && el.click());
 		}
+		// Returns last element on page (used for log pages only)
 		function getLastElement() {
 			var els = document.getElementsByClassName('LogOperation');
 			var e = els[els.length - 1];
 			return e;
 		}
+		// Checks if the last element is loaded (used for log pages only)
 		function isLoadedLast() {
 			return getLastElement().children[0].children[0].innerHTML.startsWith("Question added by");
 		}
+		// Gets time from log entry
 		function getTime() {
 			return getLastElement().children[0].children[2].textContent.split('•')[1].trim();
 		}
+		// Gets revision from log entry
 		function getRevision() {
 			var elms = getLastElement().children;
 			return elms[elms.length - 1].textContent;
 		}
+		// Gets author from log entry
 		function getAuthor() {
 			var e = getLastElement().children[0].children[0].children[1];
 			if(e) {
@@ -151,10 +166,12 @@ class QuoraScraper:
 	def __init__(self, wait=7, timeout=60):
 		self.SLEEP_TIME = wait
 		self.TIMEOUT = timeout
+
 		# Set user-agent
 		dcap = dict(DesiredCapabilities.PHANTOMJS)
 		dcap["phantomjs.page.settings.userAgent"] = self.USER_AGENT
 
+		# Phantomjs binary location
 		ex_path = "/home/wpovell/phantomjs-1.9.8-linux-i686/bin/phantomjs"
 		if not os.path.isfile(ex_path):
 			ex_path="/usr/local/bin/phantomjs"
@@ -164,6 +181,9 @@ class QuoraScraper:
 
 	@staticmethod
 	def wait(SLEEP_TIME):
+		'''Uses gamma function to wait an amount of time randomly-near SLEEP_TIME.
+		The idea is to make requests a little more variable and organic.
+		'''
 		if SLEEP_TIME:
 			t = numpy.random.gamma(SLEEP_TIME * 2, 0.5)
 		else:
@@ -172,16 +192,24 @@ class QuoraScraper:
 		sleep(t)
 
 	def close(self):
+		'''Closes headless browser
+		NOTE: This is very important. Phantomjs processes will never exit if this method isn't called.
+		'''
 		self.driver.close()
 		self.driver.quit()
 
 	def processUrl(self, url):
+		'''Takes a question url and returns the HTML of the expanded page.
+		A headless browser is necessary here since Quora loads pages dynamically with Javascript.
+		'''
 		# Scraping breaks if https url is used
 		if url.startswith('https'):
 			logging.warn('URL started with "https", replacing with "http"')
 			url = url.replace('https', 'http', 1)
 
 		logging.debug("\tLoading page")
+
+		# Scraper gets block if cookies persist
 		self.driver.delete_all_cookies()
 		self.driver.get(url)
 
@@ -189,6 +217,7 @@ class QuoraScraper:
 		if self.driver.find_elements_by_id('ErrorMain'):
 			return None
 
+		# Autoscrolls page every 0.5s
 		scrollRepeat = '''
 		var rep = setInterval(function() {
 			if(!isLoaded()) {
@@ -199,8 +228,11 @@ class QuoraScraper:
 		}, 500);
 		'''
 
+		# Determines if all questions have been loaded
+		# See QuoraScraper.funcs
 		check = 'return isLoaded();'
 
+		# Clicks on comments, collapsed answers, etc.
 		clickOnStuff = '''
 			var elms = Array.prototype.slice.call(document.getElementsByClassName('CollapsedAnswersSectionCollapsed')).concat(
 						Array.prototype.slice.call(document.getElementsByClassName('view_comments'))).concat(
@@ -238,6 +270,9 @@ class QuoraScraper:
 		return self.driver.page_source
 
 	def processLog(self, url):
+		'''Takes a question url and returns the post time and author.
+		TODO: Very similar code as processUrl, maybe combine some parts into single method?
+		'''
 		url += '/log'
 
 		# Scraping breaks if https url is used
@@ -246,6 +281,8 @@ class QuoraScraper:
 			url = url.replace('https', 'http', 1)
 
 		logging.debug("\tLoading log page")
+
+		# Scraper gets block if cookies persist
 		self.driver.delete_all_cookies()
 		self.driver.get(url)
 
@@ -280,6 +317,7 @@ class QuoraScraper:
 				logging.error("TIMEOUT")
 				return None
 			sleep(1)
+
 		date = self.processDate(self.driver.execute_script(self.funcs + "return getTime();"))
 		author = self.driver.execute_script(self.funcs + "return getAuthor();")
 		if author:
@@ -297,6 +335,7 @@ class QuoraScraper:
 
 	@staticmethod
 	def processDate(s):
+		'''Takes a Quora string date and returns timestamp'''
 		# Type 1, e.g. 14d ago
 		d = re.findall(r'(\d{1,2})d ago', s)
 		if d:
@@ -323,6 +362,9 @@ class QuoraScraper:
 
 	@classmethod
 	def getQuestionPage(cl):
+		'''Seeds the scraper with questions from sitemap/questions
+		Another (currenty unused) source is sitemap/recent
+		'''
 		qs = 'http://www.quora.com/sitemap/questions?page_id='
 		#  = 'http://www.quora.com/sitemap/recent?page_id='
 		c = 1
@@ -337,14 +379,15 @@ class QuoraScraper:
 
 	@staticmethod
 	def getAnswerText(answer):
+			'''Takes answer html and returns plain-text'''
 			# TYPE-1 ANSWER
 			# Seen on http://www.quora.com/Would-human-blood-be-a-healthy-drink-for-humans
 			answer = answer.cssselect('.ExpandedAnswer')[0]
 			text = answer.cssselect('div > div > div')
-			# TYPE-1 ANSWER
 			if text:
 				answer_text = dehtml(tostring(text[0]))
 			# TYPE-2 ANSWER
+			# Majority of questions
 			else:
 				s = tostring(answer)
 				# Messy way to remove the footer div thrown in at the end, but I don't know of anything better
@@ -355,6 +398,8 @@ class QuoraScraper:
 
 	@classmethod
 	def getQuestion(cl, html):
+		'''Takes processed html and returns parsed out data'''
+		# For when parseUrl has returned bad data
 		if html is None:
 			return None
 
@@ -429,6 +474,9 @@ class QuoraScraper:
 
 	@classmethod
 	def getUser(cl, user):
+		'''Takes username and returns information from profile.
+		This method is static since a headless browser is not needed to load profiles.
+		'''
 		url = 'http://www.quora.com/' + user
 		parsed = pq(url, headers={'user-agent': cl.USER_AGENT})
 
