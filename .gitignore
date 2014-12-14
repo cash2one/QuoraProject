@@ -1,5 +1,6 @@
 ghostdriver.log
-data
+data*
+twitterData
 results
 __pycache__
 *.pyc
