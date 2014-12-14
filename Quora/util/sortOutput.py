@@ -3,7 +3,7 @@ import shutil
 from datetime import datetime
 from sys import argv
 
-def moveFile(path, dir):
+def moveFile(path, out):
 	'''Moves file into sorted directory based on its timestamp.
 	If a file does not have a timestamp, it is not moved.
 	Structure:
@@ -18,7 +18,7 @@ def moveFile(path, dir):
 
 	# Only move if has '<timestamp>_*'
 	fn = os.path.split(path)[-1]
-	if len(fn.split('_')) < 2:
+	if not fn.endswith('.out'):
 		return
 
 	# Parsed timestamp
@@ -37,13 +37,17 @@ def moveFile(path, dir):
 
 
 if __name__ == '__main__':
-	DIR = argv[1]
-	OUT = argv[2]
+	import argparse
 
-	if not os.path.exists(OUT):
-		os.mkdir(OUT)
+	parser = argparse.ArgumentParser(description='Sorts data into MONTH/DATE folders')
+	parser.add_argument('DIR', type=str, help="directory to read data from")
+	parser.add_argument('OUT', type=str, help="directory to write datat to")
+	args = parser.parse_args()
 
-	for i, fn in enumerate(os.listdir(DIR)):
+	if not os.path.exists(args.OUT):
+		os.mkdir(args.OUT)
+
+	for i, fn in enumerate(os.listdir(args.DIR)):
 		if i % 1000 == 0:
 			print("Files copied: {}".format(i))
-		moveFile(os.path.join(DIR, fn), OUT)
+		moveFile(os.path.join(args.DIR, fn), args.OUT)
