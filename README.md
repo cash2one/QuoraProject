@@ -19,7 +19,7 @@ This repo contains my current progress on a project I'm working on related to [Q
 
 ## Running
 
-On localhost:
+On `localhost`:
 
 ```bash
 $ python -m Quora.ScrapeServer
