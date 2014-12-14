@@ -410,6 +410,8 @@ class QuoraScraper:
 		if not question:
 			question = parsed('h1.review_question_text')
 		question = dehtml(tostring(question[0]))
+		question = question.replace(u'\u2605', '', 1)
+
 
 		# Question details
 		details = dehtml(tostring(parsed('.question_details > div')[0]))
