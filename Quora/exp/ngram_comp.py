@@ -3,6 +3,7 @@ import TwitterKov
 from TwitterKov.ds.NGram import NGram
 from TwitterKov.ds.DataCount import DataCount
 from TwitterKov.pm.BackOff import BackOff
+from TwitterKov.generateModel import generateModel
 
 N_GRAM_ORDER = 2
 ORDERS = set(range(N_GRAM_ORDER + 1))
@@ -20,6 +21,7 @@ if __name__ == '__main__':
 
 	parser.add_argument('-t', default='twitterData/dev.gz', help="Twitter data to train on")
 	parser.add_argument('-q', default='data_sorted', help="Quora data to score on")
+	parser.add_argument('-d', default='twitterData/train.gz', help="Twitter data to score on")
 	args = parser.parse_args()
 
 	# Twitter data
@@ -29,7 +31,7 @@ if __name__ == '__main__':
 		grams = TwitterKov.gramitizeTokens(tweet, N_GRAM_ORDER)
 		twitterModel.train(grams, ORDERS, 1)
 
-	print("LOADED TWITTER DATA")
+	print("LOADED TWITTER TRAIN DATA")
 
 	# Quora data
 	quoraQuestionModel = DataCount()
@@ -47,10 +49,16 @@ if __name__ == '__main__':
 
 	print("LOADED QUORA DATA")
 
+	twitterDevModel = generateModel(args.d, ORDERS, None, True, twitterModel)
+
+	print("LOADED TWITTER SCORE DATA")
+
+	yt = twitterModel.score(twitterDevModel, BackOff(0.5), N_GRAM_ORDER)
 	yq = twitterModel.score(quoraQuestionModel, BackOff(0.5), N_GRAM_ORDER)
 	yd = twitterModel.score(quoraDetailModel, BackOff(0.5), N_GRAM_ORDER)
 	ya = twitterModel.score(quoraAnswerModel, BackOff(0.5), N_GRAM_ORDER)
 
+	print("Twitter --> Twitter: {:.5}".format(yt))
 	print("Questions --> Twitter: {:.5}".format(yq))
 	print("Details --> Twitter: {:.5}".format(yd))
 	print("Answers   --> Twitter: {:.5}".format(ya))
