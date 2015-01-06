@@ -1,4 +1,20 @@
 from __future__ import division
+import os
+
+def getData(DIR):
+	'''Takes directory and returns json data'''
+	for fn in os.listdir(DIR):
+		joined = os.path.join(DIR, fn)
+
+		if os.path.isdir(joined):
+			for entry in getData(joined):
+				yield entry
+		elif fn.endswith('.out'):
+			with open(joined) as f:
+				data = json.load(f)
+			if not 'data' in data:
+				continue
+			yield data
 
 if __name__ == '__main__':
 	import json
@@ -12,10 +28,13 @@ if __name__ == '__main__':
 	# Conditioned topic
 	main_topic = args.topic[0] if args.topic else None
 
+	'''
 	with open(args.DIR) as f:
 		data = f.read()
 	data = data.strip().split('\n')
 	data = [json.loads(i) for i in data]
+	'''
+	data = getData(args.DIR)
 
 	# Stats
 	avg_answers = 0
@@ -27,12 +46,9 @@ if __name__ == '__main__':
 	details_w_ans = 0
 	avg_size = 0
 
-	for entry in data:
-		key = entry.keys()[0]
-		fn = entry[key]['path']
-		with open(fn) as f:
-			url_data = json.load(f)
-
+	LEN = 0
+	for url_data in data:
+		LEN += 1
 		# Size based on string length
 		avg_size += len(json.dumps(url_data))
 
@@ -61,14 +77,14 @@ if __name__ == '__main__':
 					topic_counts[topic] = 0
 				topic_counts[topic] += 1
 
-	print("Number of Questions: {}".format(len(data)))
+	print("Number of Questions: {}".format(LEN))
 	if main_topic:
 		print("Number of Questions Labled With {}: {}".format(main_topic, main_topic_count))
-	print('\tAverage Size: {:.2f}kB'.format(avg_size / len(data) / 1000))
-	print("\tAverage Number of Answers: {:.2f}".format(avg_answers / len(data)))
-	print("\tAverage Number of Followers: {:.2f}".format(avg_followers / len(data)))
-	print("\tPercent Questions with Answers: {:.2f}%".format(qs_with_answers / len(data) * 100))
-	print("\tPercent Questions with Details: {:.2f}%".format(qs_with_details / len(data) * 100))
+	print('\tAverage Size: {:.2f}kB'.format(avg_size / LEN / 1000))
+	print("\tAverage Number of Answers: {:.2f}".format(avg_answers / LEN))
+	print("\tAverage Number of Followers: {:.2f}".format(avg_followers / LEN))
+	print("\tPercent Questions with Answers: {:.2f}%".format(qs_with_answers / LEN * 100))
+	print("\tPercent Questions with Details: {:.2f}%".format(qs_with_details / LEN * 100))
 	print("\tPercent of Questions with Details that have Answers: {:.2f}%".format(details_w_ans / qs_with_details * 100))
 	print('')
 
@@ -77,7 +93,7 @@ if __name__ == '__main__':
 
 	# Top topics
 	if main_topic:
-		print("Percent of Questions with the Topic of {}: {:.2f}%".format(main_topic, main_topic_count / len(data) * 100))
+		print("Percent of Questions with the Topic of {}: {:.2f}%".format(main_topic, main_topic_count / LEN * 100))
 		print("Top 20 Topics Co-Labled With {}:".format(main_topic))
 		for count, topic in topic_counts[::-1][:20]:
 			if topic != main_topic:
@@ -85,4 +101,4 @@ if __name__ == '__main__':
 	else:
 		print("Top 20 Topics:")
 		for count, topic in topic_counts[::-1][:20]:
-			print("\t{}: {:.2f}%".format(topic, count / len(data) * 100))
+			print("\t{}: {:.2f}%".format(topic, count / LEN * 100))
