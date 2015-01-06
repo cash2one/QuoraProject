@@ -17,11 +17,13 @@ def getText(DIR):
 
 			text = data['data']['question'].replace(u'\u00a0', ' ').encode('utf-8').strip()
 			question_text = text
+			text = data['data']['details'].replace(u'\u00a0', ' ').encode('utf-8').strip()
+			detail_text = text
 			answers = []
 			for ans in data['data']['answers']:
 				text = ans['text'].replace(u'\u00a0', ' ').encode('utf-8').strip()
 				answers.append(text)
-			yield (question_text, answers)
+			yield (question_text, detail_text, answers)
 
 DEBUG = True
 

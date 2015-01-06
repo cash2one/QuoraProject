@@ -34,9 +34,13 @@ if __name__ == '__main__':
 	# Quora data
 	quoraQuestionModel = DataCount()
 	quoraAnswerModel = DataCount()
-	for q, a in getText(args.q):
+	quoraDetailModel = DataCount()
+	for q, d, a in getText(args.q):
 		question_text = textToGrams([q], N_GRAM_ORDER)
 		quoraQuestionModel.train(question_text, twitterModel, ORDERS)
+
+		detail_text = textToGrams([d], N_GRAM_ORDER)
+		quoraDetailModel.train(detail_text, twitterModel, ORDERS)
 
 		answer_text = textToGrams(a, N_GRAM_ORDER)
 		quoraAnswerModel.train(answer_text, twitterModel, ORDERS)
@@ -44,7 +48,9 @@ if __name__ == '__main__':
 	print("LOADED QUORA DATA")
 
 	yq = twitterModel.score(quoraQuestionModel, BackOff(0.5), N_GRAM_ORDER)
+	yd = twitterModel.score(quoraDetailModel, BackOff(0.5), N_GRAM_ORDER)
 	ya = twitterModel.score(quoraAnswerModel, BackOff(0.5), N_GRAM_ORDER)
 
 	print("Questions --> Twitter: {:.5}".format(yq))
+	print("Details --> Twitter: {:.5}".format(yd))
 	print("Answers   --> Twitter: {:.5}".format(ya))
