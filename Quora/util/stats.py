@@ -1,5 +1,6 @@
 from __future__ import division
 import os
+import json
 
 def getData(DIR):
 	'''Takes directory and returns json data'''
@@ -17,7 +18,6 @@ def getData(DIR):
 			yield data
 
 if __name__ == '__main__':
-	import json
 	import argparse
 
 	parser = argparse.ArgumentParser(description='Calculate stats for data.')
