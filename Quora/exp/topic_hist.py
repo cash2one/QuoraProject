@@ -9,16 +9,12 @@ from Quora.util.stats import getData
 def graph(hist):
 	fig, ax = plt.subplots()
 
-	#bins = list(range(0, MAX+1, LABEL_INT))
-	#ax.hist(hist, bins=MAX, range=(0, MAX))
-	plt.hist(hist,
-		range=(0,max(hist)),
-		bins=max(hist)+1,
-		normed = False)
-
-	ax.set_title("Number of Answers to Questions on Quora")
+	plt.hist(hist, range=(-1,6), bins=[i + 0.5 for i in range(-1, 6)])
+	xlabels = [''] + list(range(0,6))
+	ax.set_xticklabels(xlabels)
+	ax.set_title("Number of Topics Tagged in Quora Questions")
 	ax.set_ylabel("Count")
-	ax.set_xlabel("Number of Answers")
+	ax.set_xlabel("Number of Topics Tagged")
 
 	plt.savefig("topic_hist.pdf")
 
