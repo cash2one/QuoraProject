@@ -186,9 +186,9 @@ class QuoraScraper:
 			sleep(1)
 
 			self.driver.execute_script("document.getElementsByClassName('header_login_text_box')[0].value = '{}';".format(email))
-			self.driver.save_screenshot('out.png')
+
 			self.driver.execute_script("document.getElementsByClassName('header_login_text_box')[1].value = '{}';".format(passwd))
-			self.driver.save_screenshot('out2.png')
+
 			self.driver.execute_script("document.getElementsByClassName('submit_button')[4].click();")
 			c = 0
 			while(len(self.driver.find_elements_by_class_name('HomeMain')) == 0):
