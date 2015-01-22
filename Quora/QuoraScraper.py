@@ -211,6 +211,7 @@ class QuoraScraper:
 			topics = []
 			for t in topic_elements:
 				topics.append(t.get_attribute('href'))
+			self.wait(self.SLEEP_TIME)
 			return topics
 		else:
 			return None
@@ -542,6 +543,9 @@ class QuoraScraper:
 		cl.wait(cl.SLEEP_TIME)
 
 		return ret
+
+	def __del__(self):
+		self.close()
 
 if __name__ == '__main__':
 	import argparse
