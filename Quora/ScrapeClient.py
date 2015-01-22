@@ -86,7 +86,7 @@ if __name__ == '__main__':
 	else:
 		OUTPUT_DIRECTORY = args.output[0]
 
-	scraper = QuoraScraper(args.wait)
+	scraper = QuoraScraper(wait=args.wait)
 	logging.info("Connecting to {} on port {}".format(HOST, PORT))
 	try:
 		# Send empty request to get first job

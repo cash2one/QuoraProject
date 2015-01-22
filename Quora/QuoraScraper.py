@@ -90,6 +90,7 @@ class QuoraScraper:
 	TIMEOUT = 60
 
 	USER_AGENT = "QuoraScraper"
+	LOGIN_URL = "https://www.quora.com"
 
 	# Javascript functions used in headless browser
 	funcs = '''
@@ -163,9 +164,10 @@ class QuoraScraper:
 		}
 	'''
 
-	def __init__(self, wait=7, timeout=60):
+	def __init__(self, login=False, email=None, passwd=None, wait=7, timeout=60):
 		self.SLEEP_TIME = wait
 		self.TIMEOUT = timeout
+		self.logged = login
 
 		# Set user-agent
 		dcap = dict(DesiredCapabilities.PHANTOMJS)
@@ -177,7 +179,41 @@ class QuoraScraper:
 			ex_path="/usr/local/bin/phantomjs"
 
 		# Disable the loading of images
-		self.driver = webdriver.PhantomJS(executable_path=ex_path, service_log_path='/dev/null', service_args=['--load-images=no'], desired_capabilities=dcap)
+		self.driver = webdriver.PhantomJS(executable_path=ex_path, service_log_path='/dev/null', service_args=["--ignore-ssl-errors=true", "--load-images=no"], desired_capabilities=dcap)
+
+		if login:
+			self.driver.get(self.LOGIN_URL)
+			sleep(1)
+
+			self.driver.execute_script("document.getElementsByClassName('header_login_text_box')[0].value = '{}';".format(email))
+			self.driver.save_screenshot('out.png')
+			self.driver.execute_script("document.getElementsByClassName('header_login_text_box')[1].value = '{}';".format(passwd))
+			self.driver.save_screenshot('out2.png')
+			self.driver.execute_script("document.getElementsByClassName('submit_button')[4].click();")
+			c = 0
+			while(len(self.driver.find_elements_by_class_name('HomeMain')) == 0):
+				if c > 10:
+					self.close()
+					raise Exception("Timeout")
+				if self.driver.find_elements_by_class_name('LoginUserRateLimited'):
+					self.close()
+					raise Exception("Account Locked")			
+				sleep(5)	
+				c += 1
+
+	def getRealTopics(self, url):
+		if self.logged:
+			self.driver.get(url)
+			mores = self.driver.find_elements_by_css_selector('.ViewMoreLink > a')
+			for i in mores:
+				i.click()
+			topic_elements = self.driver.find_elements_by_css_selector('a.topic_name')
+			topics = []
+			for t in topic_elements:
+				topics.append(t.get_attribute('href'))
+			return topics
+		else:
+			return None
 
 	@staticmethod
 	def wait(SLEEP_TIME):
@@ -191,10 +227,18 @@ class QuoraScraper:
 
 		sleep(t)
 
+	def logout(self):
+		self.driver.execute_script("$('.nav_item_link .profile_photo_img').click()")
+		logout = self.driver.find_elements_by_css_selector('a.logout')[0]
+		self.driver.execute_script("document.getElementsByClassName('logout')[2];")
+
 	def close(self):
-		'''Closes headless browser
+		'''Closes headless browser and logs out if needed.
 		NOTE: This is very important. Phantomjs processes will never exit if this method isn't called.
 		'''
+		if self.logged:
+			self.logout()
+
 		self.driver.close()
 		self.driver.quit()
 
