@@ -22,7 +22,7 @@ def getData(DIR):
 if __name__ == '__main__':
 	from sys import argv
 
-	DIR = '/export/a04/wpovell/scrape_data_sorted'
+	DIR = '/export/a04/wpovell/scrape_data_ordered'
 	OUT = '/export/a04/wpovell/logs/fileInfo.txt'
 	if len(argv) > 1:
 		DIR = argv[1]
