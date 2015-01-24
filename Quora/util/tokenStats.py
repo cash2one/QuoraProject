@@ -28,6 +28,8 @@ if __name__ == '__main__':
 
 	data_gen = getData(DIR)
 	for fn, data in data_gen:
+		if not 'data' in data:
+			continue
 		question_token.append(len(re.split(TOKENIZE, data['data']['question'])))
 		details_token.append(len(re.split(TOKENIZE, data['data']['details'])))
 
