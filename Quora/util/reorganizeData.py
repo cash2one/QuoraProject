@@ -1,4 +1,4 @@
-from fileInfo import getData
+from Quora.util.fileInfo import getData
 import hashlib
 import json
 
