@@ -19,7 +19,7 @@ if __name__ == '__main__':
 	import os
 
 	DIR = '/export/a04/wpovell/scrape_data_ordered'
-	OUT = '/export/a04/wpovell/out'
+	OUT = '/export/a04/wpovell/hashed_data'
 
 	if len(argv) > 1:
 		DIR = argv[1]
