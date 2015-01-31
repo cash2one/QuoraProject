@@ -37,9 +37,8 @@ if __name__ == '__main__':
 		directory = hashDirectory(OUT, HASH_DEPTH, md5hash)
 
 		with open(os.path.join(directory, 'question.txt'), 'w') as f:
-			f.write(data['data']['question'].encode('utf8'))
-		with open(os.path.join(directory, 'details.txt'), 'w') as f:
-			f.write(data['data']['details'].encode('utf8'))
+			qdata = (data['data']['question'] + '\n' + data['data']['details']).encode('utf8')
+			f.write(qdata)
 
 		metadata = {
 			"url" : data["url"],
