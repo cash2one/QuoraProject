@@ -9,7 +9,7 @@ def hashDirectory(directory, depth, urlHash):
 			os.mkdir(directory)
 	directory = os.path.join(directory, urlHash)
 	if not os.path.exists(directory):
-		os.mkdir(directory)	
+		os.mkdir(directory)
 	return directory
 
 HASH_DEPTH = 3
@@ -31,10 +31,17 @@ if __name__ == '__main__':
 	if not os.path.exists(OUT):
 		os.mkdir(OUT)
 
+	urls = set()
+	c = 0
 	for fn, data in getData(DIR):
+		c += 1
 		url = data["url"]
-		md5hash = hashlib.md5(url).hexdigest()
-		directory = hashDirectory(OUT, HASH_DEPTH, md5hash)
+		if url in urls:
+			print(url)
+		else:
+			urls.add(url)
+		sha1hash = hashlib.sha1(url).hexdigest()
+		directory = hashDirectory(OUT, HASH_DEPTH, sha1hash)
 
 		with open(os.path.join(directory, 'question.txt'), 'w') as f:
 			qdata = (data['data']['question'] + '\n' + data['data']['details']).encode('utf8')
@@ -58,3 +65,5 @@ if __name__ == '__main__':
 			}
 			with open(os.path.join(directory, 'answer{}_metadata.json'.format(i)), 'w') as f:
 				json.dump(answer_metadata, f)
+	print(c)
+	print(len(urls))
