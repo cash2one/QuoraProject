@@ -72,6 +72,6 @@ if __name__ == '__main__':
 	from sys import argv
 
 	DIR = "/export/a04/wpovell/hashed_data"
-	if len(argv[1]) > 1:
+	if len(argv) > 1:
 		DIR = argv[1]
 	createCommsFromDir(DIR)
