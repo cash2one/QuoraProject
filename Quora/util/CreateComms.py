@@ -29,7 +29,7 @@ def createComm(fn):
 	comm.metadata = create_dummy_annotation()
 
 
-	breaks = [i for i, ch in enumerate(txt) if ch == '\n' and i > 0 and txt[i-1] != '\n']
+	breaks = [i for i, ch in enumerate(txt) if ch == '\n' and i > 0 and txt[i-1] != '\n'] + [len(txt)]
 	sections = []
 	start = 0
 	for i in breaks:
