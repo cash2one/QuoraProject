@@ -76,7 +76,7 @@ public class StanfordAnnotationTool {
 										}
 										c++;
 									} catch(InvalidPathException e) {
-										System.err.println("ERROR: " + e);
+										System.err.println("Error thrown on file " + commFile.getName() + "\n" + e);
 									}
 								}
 							}
