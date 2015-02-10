@@ -54,6 +54,8 @@ def createCommsFromDir(DIR):
 			for dir3 in os.listdir(dir2):
 				dir3 = os.path.join(dir2, dir3)
 				for thread in os.listdir(dir3):
+					if thread == ".DS_Store":
+						continue
 					thread = os.path.join(dir3, thread)
 					files = os.listdir(thread)
 					r = re.compile(r'answer\d+_text\.txt|question\.txt')
