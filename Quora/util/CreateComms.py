@@ -1,4 +1,4 @@
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
 import sys
 import codecs
 import time
@@ -24,12 +24,18 @@ def createComm(fn):
 	comm = Communication()
 	comm.id = fn
 	comm.uuid = concrete.util.generate_UUID()
-	comm.type = "QUORA ANSWER" if fn.startswith("answer") else "QUORA QUESTION"
+	comm.type = "QUORA ANSWER" if fn.split('/')[-1].startswith("answer") else "QUORA QUESTION"
+	txt = re.sub('[\xa0\xc2]', ' ', txt)
+	txt = re.sub(r'\s*\n\s*', '\n', txt)
+	if not txt.strip():
+		return None
 	comm.text = txt
 	comm.metadata = create_dummy_annotation()
 
+	breaks = [i for i, ch in enumerate(txt) if ch == '\n' and i > 0 and txt[i-1] != '\n']
+	if not breaks or breaks[-1] != len(txt) - 1:
+		breaks += [len(txt)]
 
-	breaks = [i for i, ch in enumerate(txt) if ch == '\n' and i > 0 and txt[i-1] != '\n'] + [len(txt)]
 	sections = []
 	start = 0
 	for i in breaks:
@@ -63,6 +69,7 @@ def createCommsFromDir(DIR):
 						f_out = '.'.join(f.split('.')[:-1])
 						f_out += ".comm"
 						f = os.path.join(thread, f)
+						print(f)
 						c = createComm(f)
 						if c is None:
 							print("ERR: Bad communication")

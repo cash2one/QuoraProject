@@ -15,9 +15,6 @@ import java.util.Arrays;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 
-import org.apache.log4j.Logger;
-import org.apache.log4j.Level;
-
 public class StanfordAnnotationTool {
 
 	private final StanfordAgigaPipe pipe;
