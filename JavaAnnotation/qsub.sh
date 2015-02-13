@@ -21,6 +21,6 @@ for i in $1/*; do
 	fi
 done
 
-qsub -N AnnotateData -l mem_free=3G,ram_free=3G -t 0-`expr ${#arr[*]} - 1` \
+qsub -N AnnotateData -l mem_free=3G,ram_free=3G -t 1-${#arr[*]} \
 -M willipovell@gmail.com -m eas \
 -j y -v DIRS=arr -o /export/a04/wpovell/logs -cwd -S /bin/bash annotateDir.sh
