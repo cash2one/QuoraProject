@@ -1,19 +1,26 @@
 #!/bin/bash
 
-for i in $( ls $1 ); do
+I=0
+arr=()
+
+for i in $1/*; do
 	if [ -d $1/$i ]
 	then
-	    for j in $( ls $1/$i ); do
-	    	if [ -d $1/$i/$j ]
+	    for j in $i/*; do
+	    	if [ -d $j ]
 	    	then
-	    		for k in $( ls $1/$i/$j ); do
-	    			if [ -d $1/$i/$j/$k ]
+	    		for k in $j/*; do
+	    			if [ -d $k ]
 	    			then
-	    				echo $i/$j/$k
-			    		java -cp .:concrete-stanford-3.10.3-jar-with-dependencies.jar StanfordAnnotationTool "../data_new" "annotated_data" "$i/$j/$k"
+	    				arr[$I]="$k"
+	    				I=`expr $I + 1`
 			    	fi
 		    	done
 	    	fi
 	    done
 	fi
 done
+
+qsub -N AnnotateData -l mem_free=3G,ram_free=3G -t 0-`expr ${#arr[*]} - 1` \
+-M willipovell@gmail.com -m eas \
+-j y -v DIRS=arr -o /export/a04/wpovell/logs -cwd -S /bin/bash annotateDir.sh
