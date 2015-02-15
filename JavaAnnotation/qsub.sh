@@ -1,25 +1,4 @@
 #!/bin/bash
-
-I=0
-arr=()
-
-for i in $1/*; do
-	if [ -d $1/$i ]
-	then
-	    for j in $i/*; do
-	    	if [ -d $j ]
-	    	then
-	    		for k in $j/*; do
-	    			if [ -d $k ]
-	    			then
-	    				arr[$I]="$k"
-	    				I=`expr $I + 1`
-			    	fi
-		    	done
-	    	fi
-	    done
-	fi
-done
-
-qsub -N AnnotateData -cwd -l mem_free=3G,ram_free=3G -t 1-${#arr[*]} \
--j y -v DIRS=arr -o /export/a04/wpovell/logs -cwd -S /bin/bash annotateDir.sh
+N=`cat /export/a04/wpovell/fileList.txt | wc -l`
+qsub -N AnnotateData -cwd -l mem_free=10G,ram_free=10G -t 1-$N \
+-l 'arch=*64'  -v PATH -j y -o /export/a04/wpovell/logs -cwd -S /bin/bash annotateDir.sh
