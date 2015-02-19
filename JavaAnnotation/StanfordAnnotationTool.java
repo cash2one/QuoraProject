@@ -6,6 +6,7 @@ import edu.jhu.hlt.concrete.stanford.StanfordAgigaPipe;
 import edu.jhu.hlt.concrete.util.ConcreteException;
 import edu.jhu.hlt.concrete.util.CommunicationUtils;
 import edu.jhu.hlt.concrete.serialization.CommunicationSerializer;
+import edu.jhu.hlt.concrete.serialization.TarGzCompactCommunicationSerializer;
 import edu.jhu.hlt.concrete.communications.SuperCommunication;
 
 import java.util.List;
@@ -35,15 +36,16 @@ public class StanfordAnnotationTool {
 	public Communication annotate(Communication c) throws AnnotationException {
 		try {
 			return this.pipe.process(c);
-		} catch (TException | IOException | ConcreteException e) {
+		} catch (IOException | ConcreteException e) {
 			throw new AnnotationException(e);
 		}
 	}
 
 	public void annotateDir(String dir) throws IOException, ConcreteException, AnnotationException {
-		File newDir = new File(this.out + "/" + dir);
+		File newDir = new File(this.out.toString() + "/" + dir.substring(2));
 		File inDir = new File(this.in + "/" + dir);
 		newDir.mkdirs();
+		List<Communication> comms = new ArrayList<Communication>();
 		for(File thread : inDir.listFiles()) {
 			// Needed because of .DS_Store files on OSX
 			if(!thread.isDirectory()) {
@@ -61,21 +63,18 @@ public class StanfordAnnotationTool {
 						if(commList.size() > 0) {
 							Communication comm = commList.get(0);
 							comm = annotate(comm);
-							SuperCommunication superComm = new SuperCommunication(comm);
-
-							String outDir = newDir.toString() + "/" + thread.getName() + "/";
-							File f = new File(outDir);
-							f.mkdirs();
-
-							superComm.writeToFile(outDir + commFile.getName(), true);
-
+							comms.add(comm);
 						}
-					} catch(InvalidPathException|AnnotationException e) {
+					} catch(AnnotationException e) {
 						System.err.println("(!!!!) ERROR thrown on file " + commFile + "\n" + e);
 					}
 				}
 			}
 		}
+
+		TarGzCompactCommunicationSerializer gzComm = new TarGzCompactCommunicationSerializer();
+		System.out.println(newDir.toString());
+		gzComm.toTarGz(comms, newDir.toPath() + dir.substring(3,5) + ".tar.gz");
 	}
 
 	public static void main(String[] args) throws IOException, ConcreteException, AnnotationException {
