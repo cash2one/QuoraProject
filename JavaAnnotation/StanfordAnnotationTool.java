@@ -100,17 +100,17 @@ public class StanfordAnnotationTool {
 
 		if(args.length > 2) {
 			tool.annotateDir(args[2]);
-		}
-
-		System.out.println("\nWalking through data\n=======================");
-		File newDir;
-		for(File d1 : in.listFiles()) {
-			String append1 = d1.getName();
-			for(File d2 : d1.listFiles()) {
-				String append2 = append1 + "/" + d2.getName();
-				for(File d3 : d2.listFiles()) {
-					String append3 = append2 + "/" + d3.getName();
-					tool.annotateDir(append3);
+		} else {
+			System.out.println("\nWalking through data\n=======================");
+			File newDir;
+			for(File d1 : in.listFiles()) {
+				String append1 = d1.getName();
+				for(File d2 : d1.listFiles()) {
+					String append2 = append1 + "/" + d2.getName();
+					for(File d3 : d2.listFiles()) {
+						String append3 = append2 + "/" + d3.getName();
+						tool.annotateDir(append3);
+					}
 				}
 			}
 		}
