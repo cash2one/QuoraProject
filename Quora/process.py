@@ -106,17 +106,24 @@ def createEntry(name, dat, tarf):
 		info.size = len(stringf.buf)
 		tarf.addfile(info, stringf)			
 
-ORDERED_DIR = '/Users/puzzel/Documents/Git/QuoraProject/data_sorted' # '/export/a04/wpovell/scrape_data_ordered'
-OUTPUT_DIR = '/Users/puzzel/Documents/Git/QuoraProject/data_new' # '/export/a04/wpovell/concrete_files'
-
-tarFiles = {}
-
 if __name__ == '__main__':
+	import argparse
+
+	parser = argparse.ArgumentParser(description='Process raw .out files into concrete communications')
+	parser.add_argument('i', type=str, nargs='?', default='data_sorted', help='input directory')
+	parser.add_argument('o', type=str, nargs='?', default='data_new', help='output directory')
+	args = parser.parse_args()
+
+	INPUT_DIR = args.i
+	OUTPUT_DIR = args.o
+
+	tarFiles = {}
+
 	if not os.path.isdir(OUTPUT_DIR):
 		os.makedirs(OUTPUT_DIR)
 
 	toGetTimes = open('/Users/puzzel/Documents/Git/QuoraProject/missingTimes.txt', 'w') # /export/a04/wpovell/missingTimes.txt
-	files = getFiles(ORDERED_DIR)
+	files = getFiles(INPUT_DIR)
 	for fn in files:
 		fileHash = hashlib.md5(fn).hexdigest()
 		if not fn.endswith('.out'):
