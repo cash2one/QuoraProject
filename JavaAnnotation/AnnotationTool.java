@@ -5,6 +5,13 @@ import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.BasicParser;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.ParseException;
+
+
 import java.util.Collection;
 import java.util.ArrayList;
 import java.io.File;
@@ -22,34 +29,55 @@ import edu.jhu.hlt.concrete.stanford.StanfordAgigaPipe;
 import concrete.tools.AnnotationException;
 
 public class AnnotationTool {
-	static String INPUT_DIRECTORY = "../data_new"; // /export/a04/wpovell/concrete_files
-	static String OUTPUT_DIRECTORY = "../data_annotated"; // /export/a04/wpovell/concrete_annotated
-	static StanfordAgigaPipe pipe;
-	public static void main(String[] args) {
+	String INPUT_DIRECTORY, OUTPUT_DIRECTORY;
+	File loadFile;
+	StanfordAgigaPipe pipe;
+	public AnnotationTool(String[] args) {
+		Options options = new Options();
+		options.addOption("i", true, "input directory");
+		options.addOption("o", true, "output directory");
+		options.addOption("f", true, "file to open");
+
+		CommandLineParser parser = new BasicParser();
+		CommandLine cmd = null;
+		try {
+			cmd = parser.parse( options, args);
+		} catch(ParseException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
+
+		INPUT_DIRECTORY = cmd.getOptionValue("i");
+		if(INPUT_DIRECTORY == null)
+			INPUT_DIRECTORY = "../data_new"; // /export/a04/wpovell/concrete_files
+
+		OUTPUT_DIRECTORY = cmd.getOptionValue("d");
+		if(OUTPUT_DIRECTORY == null)
+			OUTPUT_DIRECTORY = "../data_annotated"; // /export/a04/wpovell/concrete_annotated
+
+		loadFile = null;
+		String loadFileS = cmd.getOptionValue("f");
+		if(loadFileS != null) {
+			loadFileS = INPUT_DIRECTORY + "/" + loadFileS;
+			if(!loadFileS.endsWith(".tar.gz")) {
+				loadFileS += ".tar.gz";
+			}
+			loadFile = new File(loadFileS);
+		}
+
 		System.out.println("Initializing Standford Annotation Tool\n=======================");
 		try {
 			pipe = new StanfordAgigaPipe();
 		} catch(IOException e) {
 			e.printStackTrace();
 		}
+	}
 
-		if(args.length > 0) {
-			INPUT_DIRECTORY = args[0];
-			if(args.length > 1) {
-				OUTPUT_DIRECTORY = args[1];
-			}
-		}
-
-		// Find all .tar.gz files in input directory
-		String[] exts = {"gz"};
-		Collection<File> files = FileUtils.listFiles(new File(INPUT_DIRECTORY), exts, true);
-
-		// Used to turn communication files into bytes
-		CompactCommunicationSerializer ser = new CompactCommunicationSerializer();
-
-		System.out.println("Looping Through Files\n=======================");
-		for(File f : files) {
+	public void proccessTarFile(File f) {
 			System.out.println(f);
+			// Used to turn communication files into bytes
+			CompactCommunicationSerializer ser = new CompactCommunicationSerializer();
+
 			File outFile = new File(f.getParent().replace(INPUT_DIRECTORY, OUTPUT_DIRECTORY));
 			outFile.mkdirs(); // Make all parent dirs for output file
 			outFile = new File(outFile + "/" + f.getName());
@@ -96,6 +124,22 @@ public class AnnotationTool {
 				tarOut.close();
 			} catch (IOException e) {
 				e.printStackTrace();
+			}
+	}
+
+	public static void main(String[] args) {
+		AnnotationTool tool = new AnnotationTool(args);
+
+		if(tool.loadFile != null) {
+			tool.proccessTarFile(tool.loadFile);
+		} else {
+			// Find all .tar.gz files in input directory
+			String[] exts = {"gz"};
+			Collection<File> files = FileUtils.listFiles(new File(tool.INPUT_DIRECTORY), exts, true);
+
+			System.out.println("Looping Through Files\n=======================");
+			for(File f : files) {
+				tool.proccessTarFile(f);
 			}
 		}
 	}
