@@ -5,6 +5,7 @@ import sys
 VERSION = sys.version_info[0]
 
 from pyquery import PyQuery as pq
+import datetime as dt
 from datetime import datetime, timedelta
 
 if VERSION == 3:
@@ -20,6 +21,8 @@ from selenium import webdriver
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
 from lxml.etree import tostring
+
+from Quora.util.DataHolder import DataHolder
 
 import numpy
 import logging
@@ -91,6 +94,8 @@ class QuoraScraper:
 
 	USER_AGENT = "QuoraScraper"
 	LOGIN_URL = "https://www.quora.com"
+
+	DAYS = [dt.date(2001, 1, i).strftime('%a') for i in range(1,8)]
 
 	# Javascript functions used in headless browser
 	funcs = '''
@@ -353,6 +358,7 @@ class QuoraScraper:
 		logging.debug("\tWaiting for answers to load")
 		start = time()
 		revision = -1
+
 		while not self.driver.execute_script(self.funcs + check):
 			new_revision = self.driver.execute_script(self.funcs + "return getRevision();")
 			if new_revision != revision:
@@ -378,17 +384,49 @@ class QuoraScraper:
 
 		return ret
 
-	@staticmethod
-	def processDate(s):
+	@classmethod
+	def processDate(cl, s, t=None):
 		'''Takes a Quora string date and returns timestamp'''
-		# Type 1, e.g. 14d ago
-		d = re.findall(r'(\d{1,2})d ago', s)
-		if d:
-			date = (datetime.now() - timedelta(days=int(d[0]))).replace(hour=0, minute=0, second=0, microsecond=0)
+		if t is None:
+			t = datetime.now()
 		else:
-			if not ',' in s:
-				s += ', {}'.format(datetime.now().year)
-			date = datetime.strptime(s, '%d %b, %Y')
+			t = datetime.fromtimestamp(float(t))
+
+		dh = DataHolder()
+		# Type 1, e.g. 14d ago
+		if dh.set(re.findall(r'(\d+)d ago', s)):
+			date = (t - timedelta(days=int(dh.get()[0]))).replace(hour=0, minute=0, second=0, microsecond=0)
+		#Type 2, e.g. 15 Mar, 2014
+		elif dh.set(re.findall(r'[\d]{1,2} [A-Za-z]{3}, [\d]{4}', s)):
+			date = datetime.strptime(dh.get()[0], "%d %b, %Y")
+		#Type 3, e.g. 15 Mar
+		elif dh.set(re.findall(r'[\d]{1,2} [A-Za-z]{3}', s)):
+			date = datetime.strptime(dh.get()[0], "%d %b")
+			date = date.replace(year=t.year)
+		#Type 4, e.g. 5h ago
+		elif dh.set(re.findall(r'(\d+)h ago', s)):
+			date = (t - timedelta(hours=int(dh.get()[0]))).replace(minute=0, second=0, microsecond=0)
+		#Type 5, e.g. 3m ago
+		elif dh.set(re.findall(r'(\d+)m ago', s)):
+			date = (t - timedelta(minutes=int(dh.get()[0]))).replace(second=0, microsecond=0)
+		#Type 6, e.g. 3am
+		elif dh.set(re.findall(r'([\d]{1,2})(am|pm)', s)):
+			d = dh.get()
+			d = (d[0][0] + ' ' + d[0][1]).upper()
+			d = datetime.strptime(d, '%I %p')
+			date = d.replace(year=t.year, month=t.month, day=t.day, minute=0, second=0)
+		#Type 7, e.g. yesterday
+		elif "yesterday" in s:
+			date = (t - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+		#Type 8, e.g. Thu
+		elif dh.set(re.findall(r'(Written|Updated) ([A-Za-z]{3})$', s)):
+			delta = t.weekday() - cl.DAYS.index(dh.get()[0][1])
+			if delta < 0:
+				delta += 7
+			date = (t - timedelta(days=delta)).replace(hour=0, minute=0, second=0, microsecond=0)
+		else:
+			logging.error("BAD DATE: {}".format(s))
+			date = None
 		date = int((date - datetime(1970,1,1)).total_seconds())
 		return date
 
@@ -442,13 +480,19 @@ class QuoraScraper:
 			return answer_text
 
 	@classmethod
-	def getQuestion(cl, html):
+	def getQuestion(cl, html, scrapeTime=None):
 		'''Takes processed html and returns parsed out data'''
+
 		# For when parseUrl has returned bad data
 		if html is None:
 			return None
 
 		parsed = pq(html)
+
+		# Star
+		star = False
+		if parsed('h1 .question_text_icons > span > span'):
+			star = True
 
 		# Question
 		question = parsed('div.question_text_edit > h1')
@@ -502,6 +546,9 @@ class QuoraScraper:
 			if not answer_text:
 				logging.error("No answer text.")
 
+			strDate = str(a.cssselect('.answer_permalink')[0].text_content())
+			date = cl.processDate(strDate, scrapeTime)
+
 			answer_info.append({
 				'author'	: author_info,
 				'text'		: answer_text,
@@ -530,13 +577,14 @@ class QuoraScraper:
 		questions, answers, posts, followers, following, edits = [cl.numToInt(i.text_content()) for i in parsed('span.profile_count')]
 
 		ret = {
-			'user'		: user,
-			'questions'	: questions,
-			'answers'	: answers,
-			'posts'		: posts,
-			'followers'	: followers,
-			'following'	: following,
-			'edits'		: edits
+			'user'      : user,
+			'questions' : questions,
+			'answers'   : answers,
+			'posts'     : posts,
+			'followers' : followers,
+			'following' : following,
+			'edits'     : edits,
+			'star'      : star
 		}
 
 		# Sleep before next request
