@@ -78,7 +78,6 @@ def binFiles(files):
 			continue
 		fileHash = f[::-1].split('_', 1)[0][::-1].replace('.out', '') # Get first 3 letters of file hash (sorry for this montrosity)
 		key = fileHash[:3]
-		print(key)
 		if not key in ret:
 			ret[key] = []
 		ret[key].append((f, fileHash))
