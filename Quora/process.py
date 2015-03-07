@@ -156,7 +156,7 @@ if __name__ == '__main__':
 		for fn, fullHash in fileList:
 			with open(fn) as f:
 				data = json.load(f)
-			if 'question' not in data:
+			if 'data' not in data:
 				continue
 			t = data['time']
 			html = data['html']
