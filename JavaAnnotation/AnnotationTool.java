@@ -51,7 +51,7 @@ public class AnnotationTool {
 		if(INPUT_DIRECTORY == null)
 			INPUT_DIRECTORY = "../data_new"; // /export/a04/wpovell/concrete_files
 
-		OUTPUT_DIRECTORY = cmd.getOptionValue("d");
+		OUTPUT_DIRECTORY = cmd.getOptionValue("o");
 		if(OUTPUT_DIRECTORY == null)
 			OUTPUT_DIRECTORY = "../data_annotated"; // /export/a04/wpovell/concrete_annotated
 
