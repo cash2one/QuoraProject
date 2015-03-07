@@ -112,7 +112,7 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='Process raw .out files into concrete communications')
 	parser.add_argument('i', type=str, nargs='?', default='data_sorted', help='input directory')
 	parser.add_argument('o', type=str, nargs='?', default='data_new', help='output directory')
-	parser.add_argument('m', type=str, nargs='?', defualt='', help='file to write missing times to')
+	parser.add_argument('m', type=str, nargs='?', default='', help='file to write missing times to')
 	args = parser.parse_args()
 
 	INPUT_DIR = args.i
@@ -127,6 +127,7 @@ if __name__ == '__main__':
 		toGetTimes = open(args.m, 'w')
 
 	files = getFiles(INPUT_DIR)
+	c = 0
 	for fn in files:
 		fileHash = hashlib.md5(fn).hexdigest()
 		if not fn.endswith('.out'):
@@ -146,6 +147,7 @@ if __name__ == '__main__':
 			if not os.path.isdir(outPath):
 				os.makedirs(outPath)
 			if not fileHash[:3] in tarFiles:
+				print(fileHash[:3])
 				tarFiles[fileHash[:3]] = tarfile.open('{}/{}.tar.gz'.format(outPath,fileHash[2]), "w:gz")
 			createEntry(fileHash, data, tarFiles[fileHash[:3]])
 	for key, value in tarFiles.items():
