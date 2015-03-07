@@ -20,13 +20,17 @@ from concrete import Communication
 from thrift import TSerialization
 from thrift.protocol import TCompactProtocol
 
+from pprint import pprint as print
+
 def create_dummy_annotation():
-    ann = concrete.AnnotationMetadata()
-    ann.tool = 'Quora Scrape Ingest'
-    ann.timestamp = int(time.time())
-    return ann
+	'''Creates empty annotation to satisfy format'''
+	ann = concrete.AnnotationMetadata()
+	ann.tool = 'Quora Scrape Ingest'
+	ann.timestamp = int(time.time())
+	return ann
 
 def createComm(cid, ctype, txt):
+	'''Creates concrete communication file from text'''
 	comm = Communication()
 	comm.id = cid
 	comm.uuid = concrete.util.generate_UUID()
@@ -55,13 +59,30 @@ def createComm(cid, ctype, txt):
 	comm.sectionList = sections
 
 	if not concrete.validate.validate_communication(comm):
-	    return None
+		return None
 	return comm
 
 def getFiles(d):
+	'''Recursively lists files in directory'''
 	for i in os.walk(d):
 		for j in i[2]:
 			yield '{}/{}'.format(i[0], j)
+
+def binFiles(files):
+	'''Returns dict in form of
+	{<first three letters of hash> : <list of files that start with that hash>, ...}
+	'''
+	ret = {}
+	for f in files:
+		if not f.endswith('.out'):
+			continue
+		fileHash = f[::-1].split('_', 1)[0][::-1].replace('.out', '') # Get first 3 letters of file hash (sorry for this montrosity)
+		key = fileHash[:3]
+		print(key)
+		if not key in ret:
+			ret[key] = []
+		ret[key].append((f, fileHash))
+	return ret
 
 def createEntry(name, dat, tarf):
 	# Question Communication
@@ -118,8 +139,6 @@ if __name__ == '__main__':
 	INPUT_DIR = args.i
 	OUTPUT_DIR = args.o
 
-	tarFiles = {}
-
 	if not os.path.isdir(OUTPUT_DIR):
 		os.makedirs(OUTPUT_DIR)
 
@@ -127,12 +146,15 @@ if __name__ == '__main__':
 		toGetTimes = open(args.m, 'w')
 
 	files = getFiles(INPUT_DIR)
-	c = 0
-	for fn in files:
-		fileHash = hashlib.md5(fn).hexdigest()
-		if not fn.endswith('.out'):
-			continue
-		else:
+	files = binFiles(files)
+
+	for fileHash, fileList in files.items():
+		print(fileHash)
+		outPath = '{}/{}/{}'.format(OUTPUT_DIR, fileHash[0], fileHash[1])
+		if not os.path.isdir(outPath):
+			os.makedirs(outPath)
+		tarf = tarfile.open('{}/{}.tar.gz'.format(outPath, fileHash[2]), 'w:gz')
+		for fn, fullHash in fileList:
 			with open(fn) as f:
 				data = json.load(f)
 			t = data['time']
@@ -143,12 +165,5 @@ if __name__ == '__main__':
 			info = QuoraScraper.getQuestion(html, t)
 			if args.m and not "log" in data:
 				toGetTimes.write(fn + '\n')
-			outPath = '{}/{}/{}'.format(OUTPUT_DIR, fileHash[0], fileHash[1])
-			if not os.path.isdir(outPath):
-				os.makedirs(outPath)
-			if not fileHash[:3] in tarFiles:
-				print(fileHash[:3])
-				tarFiles[fileHash[:3]] = tarfile.open('{}/{}.tar.gz'.format(outPath,fileHash[2]), "w:gz")
-			createEntry(fileHash, data, tarFiles[fileHash[:3]])
-	for key, value in tarFiles.items():
-		value.close()
+			createEntry(fullHash, data, tarf)
+		tarf.close()
