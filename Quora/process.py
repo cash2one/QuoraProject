@@ -112,6 +112,7 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='Process raw .out files into concrete communications')
 	parser.add_argument('i', type=str, nargs='?', default='data_sorted', help='input directory')
 	parser.add_argument('o', type=str, nargs='?', default='data_new', help='output directory')
+	parser.add_argument('m', type=str, nargs='?', defualt='', help='file to write missing times to')
 	args = parser.parse_args()
 
 	INPUT_DIR = args.i
@@ -122,7 +123,9 @@ if __name__ == '__main__':
 	if not os.path.isdir(OUTPUT_DIR):
 		os.makedirs(OUTPUT_DIR)
 
-	toGetTimes = open('/Users/puzzel/Documents/Git/QuoraProject/missingTimes.txt', 'w') # /export/a04/wpovell/missingTimes.txt
+	if args.m:
+		toGetTimes = open(args.m, 'w')
+
 	files = getFiles(INPUT_DIR)
 	for fn in files:
 		fileHash = hashlib.md5(fn).hexdigest()
@@ -137,7 +140,7 @@ if __name__ == '__main__':
 			strFile = StringIO(html)
 			html = GzipFile(fileobj=strFile).read()
 			info = QuoraScraper.getQuestion(html, t)
-			if not "log" in data:
+			if args.m and not "log" in data:
 				toGetTimes.write(fn + '\n')
 			outPath = '{}/{}/{}'.format(OUTPUT_DIR, fileHash[0], fileHash[1])
 			if not os.path.isdir(outPath):
