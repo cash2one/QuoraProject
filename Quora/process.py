@@ -110,9 +110,9 @@ if __name__ == '__main__':
 	import argparse
 
 	parser = argparse.ArgumentParser(description='Process raw .out files into concrete communications')
-	parser.add_argument('i', type=str, nargs='?', default='data_sorted', help='input directory')
-	parser.add_argument('o', type=str, nargs='?', default='data_new', help='output directory')
-	parser.add_argument('m', type=str, nargs='?', default='', help='file to write missing times to')
+	parser.add_argument('-i', type=str, nargs='?', default='data_sorted', help='input directory')
+	parser.add_argument('-o', type=str, nargs='?', default='data_new', help='output directory')
+	parser.add_argument('-m', type=str, nargs='?', default='', help='file to write missing times to')
 	args = parser.parse_args()
 
 	INPUT_DIR = args.i
