@@ -426,7 +426,7 @@ class QuoraScraper:
 			date = (t - timedelta(days=delta)).replace(hour=0, minute=0, second=0, microsecond=0)
 		else:
 			logging.error("BAD DATE: {}".format(s))
-			date = None
+			return None
 		date = int((date - datetime(1970,1,1)).total_seconds())
 		return date
 
@@ -550,18 +550,19 @@ class QuoraScraper:
 			date = cl.processDate(strDate, scrapeTime)
 
 			answer_info.append({
-				'author'	: author_info,
-				'text'		: answer_text,
-				'upvotes'	: upvotes
+				'author'    : author_info,
+				'text'      : answer_text,
+				'upvotes'   : upvotes,
+				'time'      : date
 			})
 
 		ret = {
-			'question'	: question,
-			'topics'	: topics,
-			'links'		: links,
-			'details'	: details,
-			'followers'	: followers,
-			'answers'	: answer_info
+			'question'  : question,
+			'topics'    : topics,
+			'links'     : links,
+			'details'   : details,
+			'followers' : followers,
+			'answers'   : answer_info
 		}
 
 		return ret
