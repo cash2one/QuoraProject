@@ -147,11 +147,12 @@ class QuoraScraper:
 		}
 		// Checks if the last element is loaded (used for log pages only)
 		function isLoadedLast() {
-			return getLastElement().children[0].children[0].innerHTML.startsWith("Question added by");
+			return getLastElement().children[0].innerHTML.startsWith("Question added by");
 		}
 		// Gets time from log entry
 		function getTime() {
-			return getLastElement().children[0].children[2].textContent.split('•')[1].trim();
+			var arr = getLastElement().children[2].textContent.split('•');
+			return arr[arr.length - 1].trim();q
 		}
 		// Gets revision from log entry
 		function getRevision() {
@@ -160,7 +161,7 @@ class QuoraScraper:
 		}
 		// Gets author from log entry
 		function getAuthor() {
-			var e = getLastElement().children[0].children[0].children[1];
+			var e = getLastElement().children[0].children[1];
 			if(e) {
 				return e.attributes['href'].value;
 			} else {
@@ -170,6 +171,7 @@ class QuoraScraper:
 	'''
 
 	def __init__(self, login=False, email=None, passwd=None, wait=7, timeout=60):
+		self.closed = False
 		self.SLEEP_TIME = wait
 		self.TIMEOUT = timeout
 		self.logged = login
@@ -247,6 +249,7 @@ class QuoraScraper:
 
 		self.driver.close()
 		self.driver.quit()
+		self.closed = True
 
 	def processUrl(self, url):
 		'''Takes a question url and returns the HTML of the expanded page.
@@ -368,9 +371,10 @@ class QuoraScraper:
 				logging.error("TIMEOUT")
 				return None
 			sleep(1)
-
+		sleep(2) # more sleeping bc quora dynamic content is a pain in the ass
 		date = self.processDate(self.driver.execute_script(self.funcs + "return getTime();"))
 		author = self.driver.execute_script(self.funcs + "return getAuthor();")
+
 		if author:
 			author = author[1:]
 		ret = {
@@ -381,7 +385,6 @@ class QuoraScraper:
 		# Sleep before next request
 		logging.debug("\tSleeping")
 		self.wait(self.SLEEP_TIME)
-
 		return ret
 
 	@classmethod
@@ -594,7 +597,8 @@ class QuoraScraper:
 		return ret
 
 	def __del__(self):
-		self.close()
+		if not self.closed:
+			self.close()
 
 if __name__ == '__main__':
 	import argparse
