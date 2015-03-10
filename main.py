@@ -5,26 +5,31 @@ from train import buildModel
 
 if __name__ == '__main__':
 	import argparse
-	parser = argparse.ArgumentParser(description='Generate features for dataset')
+	parser = argparse.ArgumentParser(description='Tool for generating feature data, traning models, and prediciting values.')
 
-	subparsers = parser.add_subparsers(help='commands', dest='command')
+	subparsers = parser.add_subparsers(dest='command')
 
-	listParser = subparsers.add_parser("list", description="list possible features that can be generated")
+	temp = 'List possible features'
+	listParser = subparsers.add_parser("list", help=temp, description=temp)
 
-	genParser = subparsers.add_parser("gen", description="generate feature")
+	temp = "Generate features"
+	genParser = subparsers.add_parser("gen", help=temp, description=temp)
 	genParser.add_argument('-f', '--features', required=True, nargs='+', help='features to generate')
 	genParser.add_argument('-d', '--data', nargs=1, default='train', help='dataset to generate features for')
 
-	evalParser = subparsers.add_parser("eval", description='Classification over given features')
+	temp = "Classification over given features"
+	evalParser = subparsers.add_parser("build", help=temp, description=temp)
 	evalParser.add_argument('-t', '--train', required=True, nargs=1, help='feature to train on')
 	evalParser.add_argument('-f', '--features', required=True, nargs='+', help='features to use')
 	evalParser.add_argument('-d', '--data', nargs=1, default='train', help='dataset to use')
 	evalParser.add_argument('-o', '--options', nargs=1, help="options to pass lib-linear")
+
+	#predictParser = subparsers.add_parser("predict", descript")
 
 	args = parser.parse_args()
 
 	{
 		"list" : listFeatures,
 		"gen"  : generateFeatures,
-		"eval" : buildModel
+		"build" : buildModel
 	}[args.command](args)

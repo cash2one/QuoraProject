@@ -20,6 +20,9 @@ def getFeatureData(data, name):
 			yield [feature.split(':') for feature in entry]
 			line = f.readline()
 
+### PATHS ###
+
+train = "./liblinear/train"
 
 ### MAIN ###
 
@@ -57,5 +60,5 @@ def buildModel(args):
 		opts = args.options[0].split()
 	else:
 		opts = []
-	libArgs = ["./lib-linear/train"] + opts + ["{}/results/{}/train.dat".format(args.data, t), "{}/results/{}/{}.model".format(args.data, t, args.data)]
+	libArgs = [train] + opts + ["{}/results/{}/train.dat".format(args.data, t), "{}/results/{}/{}.model".format(args.data, t, args.data)]
 	execute(libArgs)
