@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 import json
 import hashlib
 import tarfile
@@ -7,6 +6,8 @@ import os
 from concrete import Communication
 from thrift import TSerialization
 from thrift.protocol import TCompactProtocol
+
+### HELPER ###
 
 def getID(url):
 	'''Generate url for ID'''
@@ -36,6 +37,7 @@ def commFromData(data):
 	TSerialization.deserialize(comm, data, protocol_factory=TCompactProtocol.TCompactProtocolFactory())
 	return comm
 
+### FEATURE GEN ###
 def followers(data):
 	'''Generate feature file for number of followers a question has'''
 	outFile = open("{}/features/followers.txt".format(data), 'w')
@@ -44,7 +46,7 @@ def followers(data):
 			continue
 		content = json.loads(content)
 		ID = getID(content['url'])
-		outFile.write("{}: {}\n".format(ID, content["followers"]))
+		outFile.write("followers:{}\n".format(content["followers"]))
 	outFile.close()
 
 def question_length(data):
@@ -55,36 +57,31 @@ def question_length(data):
 			continue
 		comm = commFromData(content)
 		ID = comm.id
-		outFile.write("{}: {}\n".format(ID, len(comm.text)))
+		outFile.write("question_length:{}\n".format(len(comm.text)))
 	outFile.close()
 
-if __name__ == '__main__':
-	import argparse
-	parser = argparse.ArgumentParser(description='Generate features for dataset')
 
-	subparsers = parser.add_subparsers(help='commands')
+# Dictionary of feature names and func that generate them
+feature_func = {
+	"followers" : followers,
+	"question_length" : question_length
+}
 
-	listParser = subparsers.add_parser("list", help="list possible features that can be generated")
 
-	genParser = subparsers.add_parser("gen", help="generate feature")
-	genParser.add_argument('-f', '--features', required=True, nargs='+', help='features to generate')
-	genParser.add_argument('-d', '--data', nargs=1, default='train', help='dataset to generate features for')
-	args = parser.parse_args()
+### MAIN ###
 
-	feature_func = {
-		"followers" : followers,
-		"question_length" : question_length
-	}
+def generateFeatures(args):
+	'''Generates feature files'''
+	f = [f for f in args.features if f not in feature_func]
+	if f:
+		print("ERROR: The following features could not be generated: {}".format(', '.join(f)))
+		exit(1)
+	for feature in args.features:
+		print("GENERATING {}".format(feature))
+		feature_func[feature](args.data)
 
-	if 'features' in args:
-		f = [f for f in args.features if f not in feature_func]
-		if f:
-			print("ERROR: The following features could not be generated: {}".format(', '.join(f)))
-			exit(1)
-		for feature in args.features:
-			print("GENERATING {}".format(feature))
-			feature_func[feature](args.data)
-	else:
-		print("Feature Options:")
-		for key, value in feature_func.items():
-			print("\t{} : {}".format(key, value.__doc__))
+def listFeatures(args):
+	'''Lists features that can be generated'''
+	print("Feature Options:")
+	for key, value in feature_func.items():
+		print("\t{} : {}".format(key, value.__doc__))
