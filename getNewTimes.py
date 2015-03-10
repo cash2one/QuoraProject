@@ -15,6 +15,8 @@ with open(inFile) as f:
 for fn in files:
 	with open(fn) as f:
 		data = json.load(f)
+	if 'log' in data:
+		continue
 	url = data['url']
 	newData = qs.processLog(url)
 	data['log'] = newData
