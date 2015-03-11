@@ -1,9 +1,11 @@
 from Quora.QuoraScraper import QuoraScraper
 import argparse
 import json
+import traceback
 
 parser = argparse.ArgumentParser(description='Get missing post times.')
-parser.add_argument('-i', type=str, default="missingTimes.txt", nargs="?", help='file to read urls from')
+parser.add_argument('-i', default="missingTimes.txt", nargs="?", help='file to read urls from')
+parser.add_argument('-e', default="errorUrls.txt", nargs="?", help='file to write output to')
 args = parser.parse_args()
 inFile = args.i
 
@@ -18,7 +20,11 @@ for fn in files:
 	if 'log' in data:
 		continue
 	url = data['url']
-	newData = qs.processLog(url)
+	try:
+		newData = qs.processLog(url)
+	except Exception:
+		print("ERROR: {}".format(fn))
+		continue
 	data['log'] = newData
 	with open(fn, 'w') as f:
 		json.dump(data, f)
