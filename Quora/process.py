@@ -96,8 +96,8 @@ def createEntry(name, dat, tarf):
 	qdata = {
 		"followers" : data['data']['followers'],
 		"topics"    : data['data']['topics'],
-		"author"    : data['log']['author'] if 'log' in data and 'author' in data['log'] else None,
-		"time"      : data['log']['time'] if 'log' in data and 'time' in data['log'] else None,
+		"author"    : data['log']['author'] if 'log' in data and not data['log'] is None and 'author' in data['log'] else None,
+		"time"      : data['log']['time'] if 'log' in data and not data['log'] is None and 'time' in data['log'] else None,
 		"url"       : data['url']
 	}
 	stringf = StringIO(json.dumps(qdata))
