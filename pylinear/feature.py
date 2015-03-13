@@ -1,17 +1,13 @@
 import json
-import hashlib
 import tarfile
 import os
+import argparse
 
 from concrete import Communication
 from thrift import TSerialization
 from thrift.protocol import TCompactProtocol
 
 ### HELPER ###
-
-def getID(url):
-	'''Generate url for ID'''
-	return hashlib.md5(url).hexdigest()
 
 def getFiles(d):
 	'''Recursively lists files in directory'''
@@ -38,6 +34,7 @@ def commFromData(data):
 	return comm
 
 ### FEATURE GEN ###
+
 def followers(data):
 	'''Generate feature file for number of followers a question has'''
 	outFile = open("{}/features/followers.txt".format(data), 'w')
@@ -45,7 +42,6 @@ def followers(data):
 		if not name.endswith("metadata.json"):
 			continue
 		content = json.loads(content)
-		ID = getID(content['url'])
 		outFile.write("followers:{}\n".format(content["followers"]))
 	outFile.close()
 
@@ -56,7 +52,6 @@ def question_length(data):
 		if not name.endswith("question.comm"):
 			continue
 		comm = commFromData(content)
-		ID = comm.id
 		outFile.write("question_length:{}\n".format(len(comm.text)))
 	outFile.close()
 
@@ -67,21 +62,42 @@ feature_func = {
 	"question_length" : question_length
 }
 
-
 ### MAIN ###
 
-def generateFeatures(args):
-	'''Generates feature files'''
-	f = [f for f in args.features if f not in feature_func]
-	if f:
-		print("ERROR: The following features could not be generated: {}".format(', '.join(f)))
-		exit(1)
-	for feature in args.features:
-		print("GENERATING {}".format(feature))
-		feature_func[feature](args.data)
-
-def listFeatures(args):
-	'''Lists features that can be generated'''
+def listFeatures(_):
+	'''Lists features that can be generated.'''
 	print("Feature Options:")
 	for key, value in feature_func.items():
 		print("\t{} : {}".format(key, value.__doc__))
+
+def generateFeatures(features, data=None):
+	'''Generates feature files.
+
+	Presumes directory structure <data>/features/ already exists.
+	'''
+
+	## Args can be passed in as argparse instance or as individual params
+	if isinstance(features, argparse.Namespace):
+		data = features.data
+		features = features.features
+	##
+
+	# Check if any of requested features doesn't exist
+	f = [f for f in features if f not in feature_func]
+	if f:
+		print("ERROR: The following feature(s) could not be generated: {}".format(', '.join(f)))
+		exit(1)
+
+	# Write line -> file mapping
+	with open('{}/fileMapping.txt'.format(data), 'w') as outf:
+		for fn in getFiles('{}/data'.format(data)):
+			if not fn.endswith(".tar.gz"):
+				continue
+			f = tarfile.open(fn, "r:gz")
+			for tarfn in f.getmembers():
+				outf.write(tarfn.name + '\n')
+
+	# Generate features
+	for feature in features:
+		print("GENERATING {}".format(feature))
+		feature_func[feature](data)

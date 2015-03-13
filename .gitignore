@@ -1,4 +1,7 @@
 train
+dev
+test
+tune
 
 ###PYTHON IGNORE###
 # Byte-compiled / optimized / DLL files
