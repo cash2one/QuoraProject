@@ -99,5 +99,4 @@ def generateFeatures(features, data=None):
 
 	# Generate features
 	for feature in features:
-		print("GENERATING {}".format(feature))
 		feature_func[feature](data)

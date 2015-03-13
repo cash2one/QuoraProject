@@ -30,9 +30,6 @@ def getFeatureData(data, name):
 trainEx = "./liblinear/train"
 predictEx = "./liblinear/predict"
 
-# Data split names
-splits = ['train', 'tune', 'dev', 'test']
-
 ### MAIN ###
 
 def combineFeatures(data, train=None, featureNames=None, idFile=None):
@@ -67,7 +64,7 @@ def combineFeatures(data, train=None, featureNames=None, idFile=None):
 	if not idFile is None:
 		ignoreNew = True
 		with open(idFile) as f:
-			featureIDS = json.load(f)
+			featureIDs = json.load(f)
 	else:
 		featureIDs = {}
 		featureC = 1
@@ -114,6 +111,7 @@ def buildModel(trainFile, options=None):
 
 	libArgs = [trainEx] + options + [trainFile, outFn]
 	execute(libArgs)
+	return outFn
 
 def predictData(model, testFile=None, options=None):
 	'''Makes prediction using model on given test data'''
@@ -125,7 +123,7 @@ def predictData(model, testFile=None, options=None):
 		model = model.model
 	##
 
-	outFn = '/'.join(model.split('/')[:-1]) + 'predict.out'
-
+	outFn = '/'.join(model.split('/')[:-1]) + '/predict.out'
 	libArgs = [predictEx] + options + [testFile, model, outFn]
 	execute(libArgs)
+	return outFn
