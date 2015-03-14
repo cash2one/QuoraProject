@@ -137,8 +137,9 @@ def getVal(trainFile, devFile, options):
 	modelFn = '/'.join(trainFile.split('/')[:-1]) + '/grid.model'
 	buildArgs = [trainEx] + options + [trainFile, modelFn]
 	predictArgs = [predictEx, trainFile, modelFn, '/dev/null']
+ 	list(execute(buildArgs))
 	line = list(execute(predictArgs))[0]
-	return re.findall(r'([.\d]+)', line)[0], "%" if line.startswith("%") else "(Mean squared error)"
+	return re.findall(r'([.\d]+)', line)[0], "%" if line.startswith("Accuracy") else " (Mean squared error)"
 
 def gridSearch(args, _):
 	flags = {}
@@ -154,7 +155,21 @@ def gridSearch(args, _):
 
 	# Get necessary padding
 	pad = len(max([' '.join(i) for i in opts], key=len))
+
+	clss = []
+	reg  = []
+
 	# Try each combo
 	for opt in opts:
 		val, ending = getVal(args.trainFile, args.devFile, opt)
-		print('{1: <{0}} : {2: <{0}}'.format(pad, ' '.join(opt), val + ' ' + ending))
+		if ending == '%':
+			clss.append((float(val), opt))
+		else:
+			reg.append((float(val), opt))
+
+		print('{1: <{0}} : {2: <{0}}'.format(pad, ' '.join(opt), val + ending))
+	if clss:
+		best = max(clss)
+	if reg:
+		best = min(reg)
+	print('Best output with flags "{}" = {}'.format(' '.join(best[1]), best[0]))
