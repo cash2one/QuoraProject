@@ -1,7 +1,8 @@
-from Pylinear.model import buildModel, predictData, combineFeatures
+from Pylinear.model import buildModel, predictData, combineFeatures, gridSearch
 from Pylinear.feature import generateFeatures, listFeatures
 
 def doAll(args, unknown):
+	'''Combined run of gen, template, build, and predict'''
 	if not (args.noGen or args.noTemp or args.noModel):
 		print("Generating train feature file")
 		generateFeatures([args.train] + args.features, args.trainData)
@@ -60,11 +61,17 @@ if __name__ == '__main__':
 	allParser = subparsers.add_parser("all", help=temp, description=temp)
 	allParser.add_argument('-t', '--train', required=True, help="feature to predict")
 	allParser.add_argument('-f', '--features', required=True, nargs='+', help='features to use')
-	allParser.add_argument('-dt', '--trainData', default='train', help='dataset to train model')
-	allParser.add_argument('-dd', '--devData', default='dev', help='dataset to test')
+	allParser.add_argument('-T', '--trainData', default='train', help='dataset to train model')
+	allParser.add_argument('-D', '--devData', default='dev', help='dataset to test')
 	allParser.add_argument('--noGen', action='store_true', help="don't regenerate feature files")
 	allParser.add_argument('--noTemp', action='store_true', help="don't regenerate template files")
 	allParser.add_argument('--noModel', action='store_true', help="don't regenerate model file")
+
+	temp = "Perform a gridsearch over the given parameters"
+	gridParser = subparsers.add_parser("grid", help=temp, description=temp)
+	gridParser.add_argument('-t', '--trainFile', required=True, help="file to train model on")
+	gridParser.add_argument('-d', '--devFile', required=True, help="data file to test against")
+	gridParser.add_argument('-o', '--options', required=True, help='file containing list of options in the format "<flag> <val1> <val2>...\\n"')
 
 	args, unknown = parser.parse_known_args()
 
@@ -74,5 +81,6 @@ if __name__ == '__main__':
 		"template" : combineFeatures,
 		"build"    : buildModel,
 		"predict"  : predictData,
-		"all"      : doAll
+		"all"      : doAll,
+		"grid"     : gridSearch
 	}[args.command](args, unknown)

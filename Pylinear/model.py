@@ -1,19 +1,24 @@
 import os
-from time import time
 import subprocess
 import json
 import argparse
+import itertools
+import re
 
 from Pylinear.feature import generateFeatures
 
 ### HELPER ###
+
+def printCmd(command, quiet=False):
+	for i in execute(command):
+		if not quiet: print(i)
 
 def execute(command):
 	'''Executes a command (blocking) and prints all output'''
 	popen = subprocess.Popen(command, stdout=subprocess.PIPE)
 	lines_iterator = iter(popen.stdout.readline, b"")
 	for line in lines_iterator:
-		print(line)
+		yield line
 
 def getFeatureData(data, name):
 	'''Generate features for each entry in datafile'''
@@ -110,7 +115,7 @@ def buildModel(trainFile, options=None):
 	outFn = '.'.join(trainFile.split('.')[:-1]) + '.model'
 
 	libArgs = [trainEx] + options + [trainFile, outFn]
-	execute(libArgs)
+	list(execute(libArgs))
 	return outFn
 
 def predictData(model, testFile=None, options=None):
@@ -125,5 +130,31 @@ def predictData(model, testFile=None, options=None):
 
 	outFn = '/'.join(model.split('/')[:-1]) + '/predict.out'
 	libArgs = [predictEx] + options + [testFile, model, outFn]
-	execute(libArgs)
+	printCmd(libArgs)
 	return outFn
+
+def getVal(trainFile, devFile, options):
+	modelFn = '/'.join(trainFile.split('/')[:-1]) + '/grid.model'
+	buildArgs = [trainEx] + options + [trainFile, modelFn]
+	predictArgs = [predictEx, trainFile, modelFn, '/dev/null']
+	line = list(execute(predictArgs))[0]
+	return re.findall(r'([.\d]+)', line)[0], "%" if line.startswith("%") else "(Mean squared error)"
+
+def gridSearch(args, _):
+	flags = {}
+	with open(args.options) as f:
+		for line in f.read().split('\n'):
+			line = line.split()
+			flags[line[0]] = line[1:]
+	# Get every combination of options
+	opts = []
+	for combo in itertools.product(*[[(item[0], val) for val in item[1]] for item in flags.items()]):
+		# Combine options into a single list
+		opts.append(list(itertools.chain(*combo)))
+
+	# Get necessary padding
+	pad = len(max([' '.join(i) for i in opts], key=len))
+	# Try each combo
+	for opt in opts:
+		val, ending = getVal(args.trainFile, args.devFile, opt)
+		print('{1: <{0}} : {2: <{0}}'.format(pad, ' '.join(opt), val + ' ' + ending))
