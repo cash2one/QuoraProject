@@ -15,6 +15,8 @@ with open(inFile) as f:
 	files = f.read().split('\n')
 
 for fn in files:
+	if not fn.endswith('.out'):
+		continue
 	with open(fn) as f:
 		data = json.load(f)
 	if 'log' in data:
