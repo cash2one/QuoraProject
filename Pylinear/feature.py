@@ -56,6 +56,7 @@ def question_length(data):
 	outFile.close()
 
 
+
 # Dictionary of feature names and func that generate them
 feature_func = {
 	"followers" : followers,
@@ -64,7 +65,7 @@ feature_func = {
 
 ### MAIN ###
 
-def listFeatures(_):
+def listFeatures(*_):
 	'''Lists features that can be generated.'''
 	print("Feature Options:")
 	for key, value in feature_func.items():
