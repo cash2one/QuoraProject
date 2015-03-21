@@ -87,7 +87,7 @@ def combineFeatures(data, train=None, featureNames=None, idFile=None):
 					featureIDs[feature[0]] = featureC
 					featureC += 1
 				i = featureIDs[feature[0]]
-				s += '{}:{}'.format(i, feature[1])
+				s += '{}:{} '.format(i, feature[1])
 		# Add comment to first line describing what features were used
 		if first:
 			s += " # {},{}".format(train, ','.join(featureNames))

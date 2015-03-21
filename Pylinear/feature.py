@@ -33,10 +33,32 @@ def commFromData(data):
 	TSerialization.deserialize(comm, data, protocol_factory=TCompactProtocol.TCompactProtocolFactory())
 	return comm
 
+### FILE MAPPING ###
+
+def writeFileMapping(DIR):
+	'''Write line -> file mapping'''
+	with open('{}/fileMapping.txt'.format(DIR), 'w') as outf:
+		for fn in getFiles('{}/data'.format(DIR)):
+			if not fn.endswith(".tar.gz"):
+				continue
+			f = tarfile.open(fn, "r:gz")
+			for tarfn in f.getmembers():
+				outf.write(tarfn.name + '\n')
+
+def writeThreadMapping(DIR):
+	'''Write line -> question thread mapping'''
+	with open('{}/threadMapping.txt'.format(DIR), 'w') as outf:
+		lastFn = ''
+		for fn, _ in getDataFiles(DIR):
+			fn = fn.split('/')[1]
+			if lastFn != fn:
+				lastFn = fn
+				outf.write(fn + "\n")
+
 ### FEATURE GEN ###
 
 def followers(data):
-	'''Generate feature file for number of followers a question has'''
+	'''Generates feature file for number of followers a question has'''
 	outFile = open("{}/features/followers.txt".format(data), 'w')
 	for name, content in getDataFiles(data):
 		if not name.endswith("metadata.json"):
@@ -55,12 +77,29 @@ def question_length(data):
 		outFile.write("question_length:{}\n".format(len(comm.text)))
 	outFile.close()
 
-
+def has_answers(data):
+	'''Generates binary feature file for wheather or not a question has answers'''
+	outFile = open("{}/features/has_answers.txt".format(data), 'w')
+	lastThread = ""
+	found = False
+	for name, content in getDataFiles(data):
+		split = name.split('/')
+		thread = split[1]
+		fn = split[2]
+		if thread != lastThread:
+			lastThread = thread
+			found = False
+			outFile.write("has_answers:{}\n".format(1 if found else 0))
+		if not found:
+			if fn.startswith('answer'):
+				found = True
+	outFile.close()
 
 # Dictionary of feature names and func that generate them
 feature_func = {
-	"followers" : followers,
-	"question_length" : question_length
+	"followers"       : followers,
+	"question_length" : question_length,
+	"has_answers"     : has_answers
 }
 
 ### MAIN ###
@@ -89,14 +128,8 @@ def generateFeatures(features, data=None):
 		print("ERROR: The following feature(s) could not be generated: {}".format(', '.join(f)))
 		exit(1)
 
-	# Write line -> file mapping
-	with open('{}/fileMapping.txt'.format(data), 'w') as outf:
-		for fn in getFiles('{}/data'.format(data)):
-			if not fn.endswith(".tar.gz"):
-				continue
-			f = tarfile.open(fn, "r:gz")
-			for tarfn in f.getmembers():
-				outf.write(tarfn.name + '\n')
+	writeFileMapping(data)
+	writeThreadMapping(data)
 
 	# Generate features
 	for feature in features:
