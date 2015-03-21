@@ -1,7 +1,9 @@
+from __future__ import unicode_literals
 import json
 import tarfile
 import os
 import argparse
+import codecs
 
 from concrete import Communication
 from thrift import TSerialization
@@ -95,11 +97,25 @@ def has_answers(data):
 				found = True
 	outFile.close()
 
+def topics(data):
+	'''Generates feature file with binary feature for each topic.'''
+	outFile = codecs.open("{}/features/topics.txt".format(data), 'w', 'utf-8')
+	for name, content in getDataFiles(data):
+		if not name.endswith("metadata.json"):
+			continue
+		content = json.loads(content)
+		for topic in content["topics"]:
+			outFile.write("{}:1 ".format(topic[1:]))
+		outFile.write("\n")
+	outFile.close()
+
+
 # Dictionary of feature names and func that generate them
 feature_func = {
 	"followers"       : followers,
 	"question_length" : question_length,
-	"has_answers"     : has_answers
+	"has_answers"     : has_answers,
+	"topics"          : topics
 }
 
 ### MAIN ###
