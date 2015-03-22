@@ -90,8 +90,8 @@ def has_answers(data):
 		fn = split[2]
 		if thread != lastThread:
 			lastThread = thread
-			found = False
 			outFile.write("has_answers:{}\n".format(1 if found else 0))
+			found = False
 		if not found:
 			if fn.startswith('answer'):
 				found = True
