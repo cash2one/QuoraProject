@@ -1,2 +1,2 @@
 #!/bin/bash
-python -m Pylinear.main $@
+python -u -m Pylinear.main $@
