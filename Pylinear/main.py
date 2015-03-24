@@ -1,31 +1,45 @@
+from time import time
+
 from Pylinear.model import buildModel, predictData, combineFeatures, gridSearch
 from Pylinear.feature import generateFeatures, listFeatures
 
 def doAll(args, unknown):
 	'''Combined run of gen, template, build, and predict'''
 	if not (args.noGen or args.noTemp or args.noModel):
+		start = time()
 		print("Generating train feature file")
 		generateFeatures([args.train] + args.features, args.trainData)
 		print("Generating test feature file")
 		generateFeatures([args.train] + args.features, args.devData)
+		if args.times:
+			print('Time to gen features: {:.2f}s'.format(time() - start))
 
 	if not (args.noTemp or args.noModel):
+		start = time()
 		print("Generating train template file")
 		trainFn = combineFeatures(args.trainData, args.train, args.features)
 		print("Generating test template file")
 		testFn = combineFeatures(args.devData, args.train, args.features, trainFn.replace('data.txt', 'map.json'))
+		if args.times:
+			print('Time to form templates {:.2f}s'.format(time() - start))
 	else:
 		trainFn = '{}/results/{},{}/data.txt'.format(args.trainData, args.train, ','.join(args.features))
 		testFn = '{}/results/{},{}/data.txt'.format(args.devData, args.train, ','.join(args.features))
 
 	if not args.noModel:
+		start = time()
 		print("Generating train model file")
 		modelFn = buildModel(trainFn, unknown)
+		if args.times:
+			print('Time to train model: {:.2f}s'.format(time() - start))
 	else:
 		modelFn = '{}/results/{},{}/data.model'.format(args.trainData, args.train, ','.join(args.features))
 
 	print("Predicting test data")
+	start = time()
 	predictData(modelFn, testFn, list())
+	if args.times:
+		print('Time to predict: {:.2f}s'.format(time() - start))
 
 if __name__ == '__main__':
 	import argparse
@@ -66,6 +80,7 @@ if __name__ == '__main__':
 	allParser.add_argument('--noGen', action='store_true', help="don't regenerate feature files")
 	allParser.add_argument('--noTemp', action='store_true', help="don't regenerate template files")
 	allParser.add_argument('--noModel', action='store_true', help="don't regenerate model file")
+	allParser.add_argument('--times', action='store_true', help="print time for each step")
 
 	temp = "Perform a gridsearch over the given parameters"
 	gridParser = subparsers.add_parser("grid", help=temp, description=temp)
