@@ -25,7 +25,7 @@ def getDataFiles(data):
 		f = tarfile.open(fn, "r:gz")
 		for tarfn in f.getmembers():
 			tarf = f.extractfile(tarfn)
-			yield (tarfn.name, tarf.read())
+			yield (tarfn.name, tarf)
 			tarf.close()
 		f.close()
 
@@ -65,6 +65,7 @@ def followers(data):
 	for name, content in getDataFiles(data):
 		if not name.endswith("metadata.json"):
 			continue
+		content = content.read()
 		content = json.loads(content)
 		outFile.write("followers:{}\n".format(content["followers"]))
 	outFile.close()
@@ -75,6 +76,7 @@ def question_length(data):
 	for name, content in getDataFiles(data):
 		if not name.endswith("question.comm"):
 			continue
+		content = content.read()
 		comm = commFromData(content)
 		outFile.write("question_length:{}\n".format(len(comm.text)))
 	outFile.close()
@@ -84,7 +86,7 @@ def has_answers(data):
 	outFile = open("{}/features/has_answers.txt".format(data), 'w')
 	lastThread = ""
 	found = False
-	for name, content in getDataFiles(data):
+	for name, _ in getDataFiles(data):
 		split = name.split('/')
 		thread = split[1]
 		fn = split[2]
@@ -103,6 +105,7 @@ def topics(data):
 	for name, content in getDataFiles(data):
 		if not name.endswith("metadata.json"):
 			continue
+		content = content.read()
 		content = json.loads(content)
 		for topic in content["topics"]:
 			outFile.write("{}:1 ".format(topic[1:]))
