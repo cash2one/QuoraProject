@@ -80,6 +80,7 @@ def combineFeatures(data, train=None, featureNames=None, idFile=None):
 		s = '{} '.format(trainEntry[0][1])
 		for f in featureData:
 			features = f.next()
+			featureTuples = []
 			for feature in features:
 				if not feature[0] in featureIDs:
 					if ignoreNew:
@@ -88,7 +89,12 @@ def combineFeatures(data, train=None, featureNames=None, idFile=None):
 					featureC += 1
 				i = featureIDs[feature[0]]
 				if feature[0]:
-					s += '{}:{} '.format(i, feature[1])
+					featureTuples.append((i, feature[1]))
+		# Feature IDs need to be in accending order
+		featureTuples.sort()
+		for ID, featureVal in featureTuples:
+			s += '{}:{} '.format(ID, featureVal)
+
 		# Add comment to first line describing what features were used
 		if first:
 			s += " # {},{}".format(train, ','.join(featureNames))
