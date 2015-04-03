@@ -146,7 +146,9 @@ def getVal(trainFile, devFile, options):
 def gridSearch(args, _):
 	flags = {}
 	with open(args.options) as f:
-		for line in f.read().split('\n'):
+		data = f.read()
+		data = data.strip().split('\n')
+		for line in data:
 			line = line.split()
 			flags[line[0]] = line[1:]
 	# Get every combination of options
