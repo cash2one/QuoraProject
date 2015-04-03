@@ -565,6 +565,7 @@ class QuoraScraper:
 
 		ret = {
 			'question'  : question,
+			'features'  : {'hasList' : detail_features['hasList']},
 			'topics'    : topics,
 			'links'     : links,
 			'details'   : details,

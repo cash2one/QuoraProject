@@ -86,7 +86,7 @@ def binFiles(files):
 def createEntry(name, dat, tarf):
 	# Question Communication
 	qtext = data['data']['question'] + "\n\n" + data['data']['details']
-	comm = createComm(name, "QUORA QUESTION", data['data']['question'])
+	comm = createComm(name, "QUORA QUESTION", qtext)
 	stringf = StringIO(TSerialization.serialize(comm, protocol_factory=TCompactProtocol.TCompactProtocolFactory()))
 	info = tarfile.TarInfo('{}/{}/question.comm'.format(name[2], name))
 	info.size = len(stringf.buf)
@@ -94,11 +94,14 @@ def createEntry(name, dat, tarf):
 
 	# Question Metadata
 	qdata = {
-		"followers" : data['data']['followers'],
-		"topics"    : data['data']['topics'],
-		"author"    : data['log']['author'] if 'log' in data and not data['log'] is None and 'author' in data['log'] else None,
-		"time"      : data['log']['time'] if 'log' in data and not data['log'] is None and 'time' in data['log'] else None,
-		"url"       : data['url']
+		"followers"  : data['data']['followers'],
+		"topics"     : data['data']['topics'],
+		"author"     : data['log']['author'] if 'log' in data and not data['log'] is None and 'author' in data['log'] else None,
+		"time"       : data['log']['time'] if 'log' in data and not data['log'] is None and 'time' in data['log'] else None,
+		"url"        : data['url'],
+		"numAnswers" : len(data['data']['answers']),
+		"hasDetails" : bool(data['data']['details'].strip()),
+		"hasList"    : data['data']['features']['hasList']
 	}
 	stringf = StringIO(json.dumps(qdata))
 	info = tarfile.TarInfo('{}/{}/metadata.json'.format(name[2], name))
