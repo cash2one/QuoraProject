@@ -119,7 +119,8 @@ def createEntry(name, dat, tarf):
 		# Metadata
 		adata = {
 			"upvotes" : answer['upvotes'],
-			"author"  : answer['author']
+			"author"  : answer['author'],
+			"hasList" : answer['hasList']
 		}
 		stringf = StringIO(json.dumps(adata))
 		info = tarfile.TarInfo('{}/{}/answer{}.json'.format(name[2], name, i))
@@ -164,6 +165,7 @@ if __name__ == '__main__':
 			strFile = StringIO(html)
 			html = GzipFile(fileobj=strFile).read()
 			info = QuoraScraper.getQuestion(html, t)
+			data['data'] = info
 			if args.m and not "log" in data:
 				toGetTimes.write(fn + '\n')
 			createEntry(fullHash, data, tarf)
