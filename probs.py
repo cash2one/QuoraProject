@@ -5,6 +5,7 @@ D = question has details
 
 from __future__ import division, print_function
 import json
+from sys import argv
 from Pylinear.feature import getDataFiles, commFromData
 
 def printPer(n, v):
@@ -12,6 +13,10 @@ def printPer(n, v):
 	print('{} = {:.2f}%'.format(n, 100 * v))
 
 if __name__ == '__main__':
+	DIR = "splits/train"
+	if len(argv) > 1:
+		DIR = argv[1]
+
 	questions = 0
 	answered = 0
 	details = 0
