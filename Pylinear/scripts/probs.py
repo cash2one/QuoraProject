@@ -37,13 +37,12 @@ if __name__ == '__main__':
 			comm = commFromData(content.read())
 			if len(comm.sectionList) > 1:
 				dets = True
-		if name.endswith('metadata.json'):
-			content = json.load(content)
-			if content['hasList']:
-				hasList = True
+		#if name.endswith('metadata.json'):
+		#	content = json.load(content)
+		#	if content['hasList']:
+		#		hasList = True
 
 		curDir = name.split('/')[1]
-		#print(curDir)
 		if dirName != curDir:
 			questions += 1
 			if ans:
@@ -54,10 +53,10 @@ if __name__ == '__main__':
 				answered_with_details += 1
 			if ans and not dets:
 				answered_without_details += 1
-			if hasList:
-				question_has_list += 1
-			if hasList and ans:
-				question_with_list_answered += 1
+			#if hasList:
+			#	question_has_list += 1
+			#if hasList and ans:
+			#	question_with_list_answered += 1
 
 			ans = False
 			dets = False
@@ -72,5 +71,5 @@ if __name__ == '__main__':
 	printPer('P(D)   ', details / questions)
 	printPer('P(A,D) ', answered_with_details / questions)
 	print()
-	printPer('P(L)   ', question_has_list / questions)
-	printPer('P(A|L) ', question_with_list_answered / question_has_list)
+	#printPer('P(L)   ', question_has_list / questions)
+	#printPer('P(A|L) ', question_with_list_answered / question_has_list)
