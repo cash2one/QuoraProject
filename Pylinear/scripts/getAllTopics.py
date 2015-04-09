@@ -1,3 +1,4 @@
+'''Generate list of all topic tags found in dataset.'''
 from __future__ import unicode_literals
 from Pylinear.feature import getFiles
 import tarfile

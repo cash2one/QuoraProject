@@ -1,4 +1,4 @@
-'''
+'''Generate basic conditional probabilties for features.
 A = question has at least one answer
 D = question has details
 L = question has list
