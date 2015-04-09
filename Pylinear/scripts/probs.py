@@ -64,6 +64,8 @@ if __name__ == '__main__':
 			dirName = curDir
 
 	print(__doc__)
+	print("DEBUG\n========")
+	print('Q:{}\nA:{}\nD:{}\nAWD:{}\nAWOD:{}'.format(questions, answered, details, answered_with_details, answered_without_details))
 	printPer('P(A)   ', answered / questions)
 	printPer('P(A|D) ', answered_with_details / details)
 	printPer('P(A|!D)', answered_without_details / (questions - details))
