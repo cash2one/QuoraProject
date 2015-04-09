@@ -30,7 +30,7 @@ if __name__ == '__main__':
 	ans = False
 	dets = False
 	hasList = True
-	for name, content in getDataFiles("splits/train"):
+	for name, content in getDataFiles(DIR):
 		if 'answer' in name:
 			ans = True
 		if name.endswith('question.comm'):
