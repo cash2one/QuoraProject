@@ -11,9 +11,10 @@ def getFiles(DIR):
 			with open(os.path.join(DIR, f)) as fo:
 				data = json.load(fo)
 				if "log" in data:
-					yield data["log"]["date"]
-
-
+					try:
+						yield data["log"]["date"]
+					except TypeError:
+						print("ERR")
 
 if __name__ == '__main__':
 	import sys
