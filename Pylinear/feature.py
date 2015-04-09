@@ -99,6 +99,17 @@ def has_answers(data):
 				found = True
 	outFile.close()
 
+def has_list(data):
+	outFile = open("{}/features/has_list.txt".format(data), 'w')
+	for name, data in getDataFiles(data):
+		if name.endswith("metadata.json"):
+			data = json.load(data)
+			if data['hasList']:
+				outFile.write('has_list:1\n')
+			else:
+				outFile.write('has_list:0\n')
+	outFile.close()
+
 def topics(data):
 	'''Generates feature file with binary feature for each topic.'''
 	outFile = codecs.open("{}/features/topics.txt".format(data), 'w', 'utf-8')
@@ -118,7 +129,8 @@ feature_func = {
 	"followers"       : followers,
 	"question_length" : question_length,
 	"has_answers"     : has_answers,
-	"topics"          : topics
+	"topics"          : topics,
+	"has_list"        : has_list
 }
 
 ### MAIN ###
