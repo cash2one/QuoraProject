@@ -1,6 +1,7 @@
 '''
 A = question has at least one answer
 D = question has details
+L = question has list
 '''
 
 from __future__ import division, print_function
@@ -42,6 +43,7 @@ if __name__ == '__main__':
 				hasList = True
 
 		curDir = name.split('/')[1]
+		#print(curDir)
 		if dirName != curDir:
 			questions += 1
 			if ans:
