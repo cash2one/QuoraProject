@@ -21,6 +21,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
+import java.io.OutputStream;
 
 import edu.jhu.hlt.concrete.serialization.CompactCommunicationSerializer;
 import edu.jhu.hlt.concrete.Communication;
@@ -82,7 +83,9 @@ public class AnnotationTool {
 			outFile.mkdirs(); // Make all parent dirs for output file
 			outFile = new File(outFile + "/" + f.getName());
 			try {
-				TarArchiveOutputStream tarOut = new TarArchiveOutputStream(new GzipCompressorOutputStream(new BufferedOutputStream(new FileOutputStream(outFile))));
+				OutputStream out = new FileOutputStream(outFile);
+				GzipCompressorOutputStream gzOut = new GzipCompressorOutputStream(new BufferedOutputStream(out));
+				TarArchiveOutputStream tarOut = new TarArchiveOutputStream(gzOut);
 				final TarArchiveInputStream tarIn = new TarArchiveInputStream(new GzipCompressorInputStream( new FileInputStream(f)));
 				TarArchiveEntry entry;
 				while ( ( entry = tarIn.getNextTarEntry() ) != null ) {
@@ -121,8 +124,10 @@ public class AnnotationTool {
 					tarOut.closeArchiveEntry();
 				}
 				tarIn.close();
-				tarOut.close();
 				tarOut.finish();
+				tarOut.close();
+				gzOut.close();
+				out.close();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
