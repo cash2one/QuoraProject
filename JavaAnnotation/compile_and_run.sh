@@ -1,1 +1,0 @@
-javac -cp concrete-stanford-3.10.3-jar-with-dependencies.jar StanfordAnnotationTool.java && java -cp .:concrete-stanford-3.10.3-jar-with-dependencies.jar StanfordAnnotationTool

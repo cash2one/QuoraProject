@@ -122,6 +122,7 @@ public class AnnotationTool {
 				}
 				tarIn.close();
 				tarOut.close();
+				tarOut.finish();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

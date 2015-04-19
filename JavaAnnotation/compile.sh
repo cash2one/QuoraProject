@@ -1,0 +1,1 @@
+javac -cp commons-cli-1.2.jar:concrete-stanford-4.2.1-jar-with-dependencies.jar AnnotationTool.java
