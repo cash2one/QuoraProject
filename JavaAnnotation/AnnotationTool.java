@@ -103,6 +103,7 @@ public class AnnotationTool {
 					// Create new TarEntry
 					TarArchiveEntry outEntry = new TarArchiveEntry(name);
 					byte[] dataBytes = null;
+					boolean canBeWritten = false;
 
 					if(name.endsWith("comm")) {
 						try {
@@ -110,18 +111,22 @@ public class AnnotationTool {
 							System.out.println(name);
 							c = pipe.process(c); // Annotate Communication File
 							dataBytes = ser.toBytes(c);
-						} catch(IOException|AnnotationException|ConcreteException e) {
+							canBeWritten = true;
+						} catch(IOException|OutOfMemoryError|AnnotationException|ConcreteException e) {
 							e.printStackTrace();
 						}
 					} else {
 						dataBytes = bout.toByteArray();
+						canBeWritten = true;
 					}
 
 					// Add entry to tar
-					outEntry.setSize(dataBytes.length);
-					tarOut.putArchiveEntry(outEntry);
-					tarOut.write(dataBytes);
-					tarOut.closeArchiveEntry();
+					if(canBeWritten) {
+						outEntry.setSize(dataBytes.length);
+						tarOut.putArchiveEntry(outEntry);
+						tarOut.write(dataBytes);
+						tarOut.closeArchiveEntry();
+					}
 				}
 				tarIn.close();
 				tarOut.finish();
