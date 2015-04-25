@@ -5,16 +5,14 @@ from collections import Counter
 
 import os
 import tarfile
-def getDataFiles(data):
-	'''Open all tar.gz files and return member data'''
+def listDataFiles(data):
+	'''Lists all tar.gz files'''
 	for fn in getFiles(data):
 		if not fn.endswith(".tar.gz"):
 			continue
 		f = tarfile.open(fn, "r:gz")
 		for tarfn in f.getmembers():
-			tarf = f.extractfile(tarfn)
-			yield (tarfn.name, tarf)
-			tarf.close()
+			yield tarfn.name
 		f.close()
 
 def getFiles(d):
@@ -65,7 +63,7 @@ if __name__ == "__main__":
 	thread = ""
 	answerCounts = []
 	numAnswers = 0
-	for n, f in getDataFiles(DIR):
+	for n in listDataFiles(DIR):
 		_, newThread, fn = n.split('/')
 
 		if newThread != thread:
@@ -78,4 +76,3 @@ if __name__ == "__main__":
 
 # Print for reprocessing on local machine
 print(Counter(answerCounts))
-graph(answerCounts)

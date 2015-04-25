@@ -4,4 +4,5 @@
 #$ -N AnswerHist
 #$ -S /bin/bash
 #$ -j y -o /export/a04/wpovell/logs
+#$ -l mem_free=60G,ram_free=60G,h_vmem=60G
 python -u -m Pylinear.scripts.answerHist /export/a04/wpovell/compressed_data
