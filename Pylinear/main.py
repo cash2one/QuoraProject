@@ -53,13 +53,13 @@ if __name__ == '__main__':
 	temp = "Generate features"
 	genParser = subparsers.add_parser("gen", help=temp, description=temp)
 	genParser.add_argument('-f', '--features', required=True, nargs='+', help='features to generate')
-	genParser.add_argument('-d', '--data', default='train', help='dataset to generate features for')
+	genParser.add_argument('-d', '--data', default='splits/train', help='dataset to generate features for')
 
 	temp = "Combine feature templates"
 	templateParser = subparsers.add_parser("template", help=temp, description=temp)
 	templateParser.add_argument('-t', '--train', required=True, help='value or class feature that is to be predicted')
 	templateParser.add_argument('-f', '--features', required=True, nargs="+", help='features to be used to predict')
-	templateParser.add_argument('-d', '--data', default='train', help="dataset to use features for")
+	templateParser.add_argument('-d', '--data', default='splits/train', help="dataset to use features for")
 	templateParser.add_argument('-i', '--idFile', default=None, help="id mapping to load")
 
 	temp = "Build model from data file"
@@ -75,8 +75,8 @@ if __name__ == '__main__':
 	allParser = subparsers.add_parser("all", help=temp, description=temp)
 	allParser.add_argument('-t', '--train', required=True, help="feature to predict")
 	allParser.add_argument('-f', '--features', required=True, nargs='+', help='features to use')
-	allParser.add_argument('-T', '--trainData', default='train', help='dataset to train model')
-	allParser.add_argument('-D', '--devData', default='dev', help='dataset to test')
+	allParser.add_argument('-T', '--trainData', default='splits/train', help='dataset to train model')
+	allParser.add_argument('-D', '--devData', default='splits/dev', help='dataset to test')
 	allParser.add_argument('--noGen', action='store_true', help="don't regenerate feature files")
 	allParser.add_argument('--noTemp', action='store_true', help="don't regenerate template files")
 	allParser.add_argument('--noModel', action='store_true', help="don't regenerate model file")
