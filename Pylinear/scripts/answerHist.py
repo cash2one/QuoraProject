@@ -3,6 +3,8 @@ from matplotlib import pyplot as plt
 import math
 from collections import Counter
 
+import os
+import tarfile
 def getDataFiles(data):
 	'''Open all tar.gz files and return member data'''
 	for fn in getFiles(data):
@@ -14,6 +16,12 @@ def getDataFiles(data):
 			yield (tarfn.name, tarf)
 			tarf.close()
 		f.close()
+
+def getFiles(d):
+	'''Recursively lists files in directory'''
+	for i in os.walk(d):
+		for j in i[2]:
+			yield '{}/{}'.format(i[0], j)
 
 def graph(answerCounts):
 	# BIN_COUNT bins of size 1
@@ -51,7 +59,7 @@ def stdDev(l, meanVal):
 
 if __name__ == "__main__":
 	from sys import argv
-	DIR = "splits/train"
+	DIR = "splits/train/data"
 	if len(argv) > 1:
 		DIR = argv[1]
 	thread = ""
@@ -70,3 +78,4 @@ if __name__ == "__main__":
 
 # Print for reprocessing on local machine
 print(Counter(answerCounts))
+graph(answerCounts)
