@@ -112,7 +112,7 @@ public class AnnotationTool {
 							c = pipe.process(c); // Annotate Communication File
 							dataBytes = ser.toBytes(c);
 							canBeWritten = true;
-						} catch(IOException|OutOfMemoryError|AnnotationException|ConcreteException e) {
+						} catch(NullPointerException|IOException|OutOfMemoryError|AnnotationException|ConcreteException e) {
 							e.printStackTrace();
 						}
 					} else {
