@@ -43,7 +43,6 @@ if __name__ == '__main__':
 				hasList = True
 
 		curDir = name.split('/')[1]
-		print(dirName, curDir)
 		if dirName != curDir:
 			questions += 1
 			if ans:
@@ -66,7 +65,7 @@ if __name__ == '__main__':
 
 	print(__doc__)
 	print("DEBUG\n========")
-	print('Q:{}\nA:{}\nD:{}\nAWD:{}\nAWOD:{}'.format(questions, answered, details, answered_with_details, answered_without_details))
+	print('Threads:{}\nA:{}\nD:{}\nAWD:{}\nAWOD:{}'.format(questions, answered, details, answered_with_details, answered_without_details))
 	printPer('P(A)   ', answered / questions)
 	printPer('P(A|D) ', answered_with_details / details)
 	printPer('P(A|!D)', answered_without_details / (questions - details))
@@ -74,5 +73,5 @@ if __name__ == '__main__':
 	printPer('P(D)   ', details / questions)
 	printPer('P(A,D) ', answered_with_details / questions)
 	print()
-	#printPer('P(L)   ', question_has_list / questions)
-	#printPer('P(A|L) ', question_with_list_answered / question_has_list)
+	printPer('P(L)   ', question_has_list / questions)
+	printPer('P(A|L) ', question_with_list_answered / question_has_list)
