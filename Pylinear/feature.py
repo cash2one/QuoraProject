@@ -21,7 +21,7 @@ def getFiles(d):
 
 def getDataFiles(data):
 	'''Open all tar.gz files and return member data'''
-	for fn in getFiles("{}/data".format(data)):
+	for fn in getFiles(data):
 		if not fn.endswith(".tar.gz"):
 			continue
 		f = tarfile.open(fn, "r:gz")
@@ -64,7 +64,7 @@ def writeThreadMapping(DIR):
 def followers(data):
 	'''Generates feature file for number of followers a question has'''
 	outFile = open("{}/features/followers.txt".format(data), 'w')
-	for name, content in getDataFiles(data):
+	for name, content in getDataFiles(data + "/data"):
 		if not name.endswith("metadata.json"):
 			continue
 		content = content.read()
@@ -75,7 +75,7 @@ def followers(data):
 def question_length(data):
 	'''Generates feature file for length of question'''
 	outFile = open("{}/features/question_length.txt".format(data), 'w')
-	for name, content in getDataFiles(data):
+	for name, content in getDataFiles(data + "/data"):
 		if not name.endswith("question.comm"):
 			continue
 		content = content.read()
@@ -89,7 +89,7 @@ def has_answers(data):
 	outFile = open("{}/features/has_answers.txt".format(data), 'w')
 	lastThread = ""
 	found = False
-	for name, _ in getDataFiles(data):
+	for name, _ in getDataFiles(data + "/data"):
 		split = name.split('/')
 		thread = split[1]
 		fn = split[2]
@@ -104,7 +104,7 @@ def has_answers(data):
 
 def has_list(data):
 	outFile = open("{}/features/has_list.txt".format(data), 'w')
-	for name, data in getDataFiles(data):
+	for name, data in getDataFiles(data + "/data"):
 		if name.endswith("metadata.json"):
 			data = json.load(data)
 			if data['hasList']:
@@ -116,7 +116,7 @@ def has_list(data):
 def topics(data):
 	'''Generates feature file with binary feature for each topic.'''
 	outFile = codecs.open("{}/features/topics.txt".format(data), 'w', 'utf-8')
-	for name, content in getDataFiles(data):
+	for name, content in getDataFiles(data + "/data"):
 		if not name.endswith("metadata.json"):
 			continue
 		content = content.read()
@@ -152,7 +152,7 @@ def getVocab(data, CUTOFF=5):
 	tokenDict = {}
 	vocab = set()
 
-	for n, f in getDataFiles(data):
+	for n, f in getDataFiles(data + "/data"):
 		if not n.endswith(".comm"):
 			continue
 		comm = commFromData(f.read())
@@ -206,7 +206,7 @@ def ngram_features(DIR, ngram, noramlized_ngram, tfidf, cutofff=5):
 
 	print("Getting file features")
 	numDocs = 0
-	for n, f in getDataFiles(DIR):
+	for n, f in getDataFiles(DIR + "/data"):
 		if not n.endswith("question.comm"):
 			continue
 		comm = commFromData(f.read())
@@ -235,7 +235,7 @@ def ngram_features(DIR, ngram, noramlized_ngram, tfidf, cutofff=5):
 
 	tfidfOutFile = codecs.open("{}/features/tfidf.txt".format(DIR), 'w', 'utf-8')
 	results = []
-	for n, f in getDataFiles(DIR):
+	for n, f in getDataFiles(DIR + "/data"):
 		if not n.endswith("question.comm"):
 			continue
 		results = []

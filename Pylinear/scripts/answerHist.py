@@ -3,40 +3,21 @@ from matplotlib import pyplot as plt
 import math
 from collections import Counter
 
-import os
-import tarfile
-def listDataFiles(data):
-	'''Lists all tar.gz files'''
-	for fn in getFiles(data):
-		if not fn.endswith(".tar.gz"):
-			continue
-		f = tarfile.open(fn, "r:gz")
-		for tarfn in f.getmembers():
-			yield tarfn.name
-		f.close()
-
-def getFiles(d):
-	'''Recursively lists files in directory'''
-	for i in os.walk(d):
-		for j in i[2]:
-			yield '{}/{}'.format(i[0], j)
-
 def graph(answerCounts):
 	# BIN_COUNT bins of size 1
 	plt.hist(answerCounts, bins=BIN_COUNT, range=(0,BIN_COUNT))
-
-	# Mean/Median lines
-	#meanVal = mean(answerCounts)
-	#medianVal = median(answerCounts)
-	#plt.axhline(meanVal, linestyle='--', color='r', label="Mean")
-	#plt.axhline(medianVal, linestyle='--', color='g', label="Median")
 
 	# Labels
 	plt.title("Number of Answers Quora Posts Get")
 	plt.xlabel("Number of Answers")
 	plt.ylabel("Frequency")
 	plt.legend()
+	plt.show()
 
+	plt.boxplot(answerCounts)
+	plt.title("Number of Answers Quora Posts Get")
+	plt.ylabel("Number of Answers")
+	plt.yscale("log")
 	plt.show()
 
 BIN_COUNT = 100
@@ -63,7 +44,7 @@ if __name__ == "__main__":
 	thread = ""
 	answerCounts = []
 	numAnswers = 0
-	for n in listDataFiles(DIR):
+	for n in getDataFiles(DIR):
 		_, newThread, fn = n.split('/')
 
 		if newThread != thread:

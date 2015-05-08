@@ -1,20 +1,7 @@
 '''Generate list of all topic tags found in dataset.'''
 from __future__ import unicode_literals
-from Pylinear.feature import getFiles
-import tarfile
+from Pylinear.feature import getDataFiles
 import codecs
-
-def getDataFiles(DIR):
-	'''Open all tar.gz files and return member data'''
-	for fn in getFiles(DIR):
-		if not fn.endswith(".tar.gz"):
-			continue
-		f = tarfile.open(fn, "r:gz")
-		for tarfn in f.getmembers():
-			tarf = f.extractfile(tarfn)
-			yield (tarfn.name, tarf.read())
-			tarf.close()
-		f.close()
 
 if __name__ == '__main__':
 	from sys import argv

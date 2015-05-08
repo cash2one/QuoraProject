@@ -7,20 +7,7 @@ L = question has list
 from __future__ import division, print_function
 import json
 from sys import argv
-from Pylinear.feature import commFromData, getFiles
-import tarfile
-
-def getDataFiles(data):
-	'''Open all tar.gz files and return member data'''
-	for fn in getFiles(data):
-		if not fn.endswith(".tar.gz"):
-			continue
-		f = tarfile.open(fn, "r:gz")
-		for tarfn in f.getmembers():
-			tarf = f.extractfile(tarfn)
-			yield (tarfn.name, tarf)
-			tarf.close()
-		f.close()
+from Pylinear.feature import commFromData, getDataFiles
 
 def printPer(n, v):
 	'''Prints percent value.'''

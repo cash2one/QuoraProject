@@ -18,5 +18,6 @@ if __name__ == '__main__':
 			if not author in authors:
 				authors[author] = []
 			authors[author].append(data['followers'])
+
 	with open('userOut.json', 'w') as f:
 		json.dump(authors, f)
