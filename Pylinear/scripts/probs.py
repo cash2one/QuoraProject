@@ -49,7 +49,6 @@ if __name__ == '__main__':
 		if name.endswith('question.comm'):
 			comm = commFromData(content.read())
 			if len(comm.sectionList) > 1:
-				print("HERE")
 				dets = True
 		if name.endswith('metadata.json'):
 			content = json.load(content)
