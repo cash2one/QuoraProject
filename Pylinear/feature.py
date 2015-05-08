@@ -1,9 +1,11 @@
-from __future__ import unicode_literals
+from __future__ import unicode_literals, division
 import json
 import tarfile
 import os
 import argparse
 import codecs
+import math
+from collections import Counter
 
 from concrete import Communication
 from thrift import TSerialization
@@ -78,6 +80,7 @@ def question_length(data):
 			continue
 		content = content.read()
 		comm = commFromData(content)
+
 		outFile.write("question_length:{}\n".format(len(comm.text)))
 	outFile.close()
 
@@ -123,6 +126,142 @@ def topics(data):
 		outFile.write("\n")
 	outFile.close()
 
+##
+## NGRAM FEATURES
+##
+
+def textFromSpan(comm, span):
+	return comm.text.encode('utf-8')[span.start:span.ending+1]
+
+def loadStopWords():
+	path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "stopwords.txt")
+	with open(path) as f:
+		lines = set(filter(lambda x: not x.startswith("#"), f.read().strip().split('\n')))
+	return lines
+
+def tokensFromComm(comm):
+	global stopWords
+	for section in comm.sectionList:
+		if not section.sentenceList is None:
+			for sentence in section.sentenceList:
+				for token in sentence.tokenization.tokenList.tokenList:
+					# I've never had to use "ISO-8859-1" before, but it works...
+					token = textFromSpan(comm, token.textSpan).strip().decode("ISO-8859-1")
+					token = token.replace("\n", "-NL-").replace(":", "-CLN-").replace(" ", "-SPC-").replace("#", "-PND-")
+					yield token
+					
+
+def getVocab(data, CUTOFF=5):
+	global stopWords
+
+	tokenDict = {}
+	vocab = set()
+
+	for n, f in getDataFiles(data):
+		if not n.endswith(".comm"):
+			continue
+		comm = commFromData(f.read())
+		for token in tokensFromComm(comm):
+			if token in vocab:
+				continue
+			if token.lower() in stopWords:
+				token = "-STOPWORD-"
+			if not token in tokenDict:
+				tokenDict[token] = 0
+			tokenDict[token] += 1
+			if tokenDict[token] > CUTOFF:
+				tokenDict.pop(token)
+				vocab.add(token)
+	return vocab
+
+def getDocumentVocab(comm, vocab=None):
+	global stopWords
+	docVocab = set()
+	for token in tokensFromComm(comm):
+		if vocab is not None and token not in vocab:
+			token = "-OOV-"
+		if token.lower() in stopWords:
+			token = "-STOPWORD-"
+
+		docVocab.add(token)
+	return docVocab
+
+def tokenFeatures(comm, vocab, normalized=False):
+	tokens = tokensFromComm(comm)
+	tokens = Counter([i if i in vocab else "-OOV-" for i in tokens])
+	if normalized:
+		numTokens = sum(tokens.values())
+		tokens = {k:v/numTokens for k, v in tokens.items()}
+	return tokens
+
+
+def ngram_features(DIR, ngram, noramlized_ngram, tfidf, cutofff=5):
+	docVocabs = []
+
+	# Output files
+	if ngram:
+		ngramOutFile = codecs.open("{}/features/ngram.txt".format(DIR), 'w', 'utf-8')
+	if noramlized_ngram:
+		normalizedOutFile = codecs.open("{}/features/normalizedNgram.txt".format(DIR), 'w', 'utf-8')
+	if tfidf:
+		tfidfOutFile = codecs.open("{}/features/tfidf.txt".format(DIR), 'w', 'utf-8')
+
+	print("Getting vocab")
+	vocab = getVocab(DIR, 0)
+
+	print("Getting file features")
+	numDocs = 0
+	for n, f in getDataFiles(DIR):
+		if not n.endswith("question.comm"):
+			continue
+		comm = commFromData(f.read())
+
+		numDocs += 1
+		if tfidf:
+			docVocabs.append(getDocumentVocab(comm, vocab))
+
+		if ngram:
+			feats = tokenFeatures(comm, vocab)
+			line = " ".join(["NGRAM_{}:{}".format(k,v) for k, v in feats.items()])
+			ngramOutFile.write(line + "\n")
+			
+		if noramlized_ngram:
+			feats = tokenFeatures(comm, vocab, True)
+			line = " ".join(["NNGRAM_{}:{}".format(k,v) for k, v in feats.items()])
+			normalizedNgram.write(line + "\n")
+
+	if ngram:
+		ngramOutFile.close()
+	if noramlized_ngram:
+		normalizedOutFile.close()
+
+	if not tfidf:
+		return
+
+	tfidfOutFile = codecs.open("{}/features/tfidf.txt".format(DIR), 'w', 'utf-8')
+	results = []
+	for n, f in getDataFiles(DIR):
+		if not n.endswith("question.comm"):
+			continue
+		results = []
+		comm = commFromData(f.read())
+		tokens = [token if token in vocab else "-OOV-" for token in tokensFromComm(comm)]
+		tokens = Counter(tokens)
+		for k, v in tokens.items():
+			tf = v / sum(tokens.values())
+			# 1 + shouldn't be necessary, but you get div by 0 otherwise
+			idf = math.log(numDocs / (1 + len([True for i in docVocabs if k in i])))
+			tfidf_val = tf * idf
+			results.append("TFIDF_{}:{}".format(k,tfidf_val))
+		line = ' '.join(results)
+		tfidfOutFile.write(line + "\n")
+	tfidfOutFile.close()
+
+stopWords = loadStopWords()
+
+##
+## End NGRAM features
+##
 
 # Dictionary of feature names and func that generate them
 feature_func = {
@@ -130,7 +269,10 @@ feature_func = {
 	"question_length" : question_length,
 	"has_answers"     : has_answers,
 	"topics"          : topics,
-	"has_list"        : has_list
+	"has_list"        : has_list,
+	"ngram"           : None,
+	"norm_ngram"      : None,
+	"tfidf"           : None
 }
 
 ### MAIN ###
@@ -153,6 +295,15 @@ def generateFeatures(features, data=None):
 		features = features.features
 	##
 
+	print(data)
+
+	# Remove duplicates
+	features = list(set(features))
+
+	ngramNames = {"ngram", "noramlized_ngram", "tfidf"}
+	ngramFeatures = set(features) & set(["ngram", "norm_ngram", "tfidf"]) 
+	for feat in ngramFeatures: features.pop(features.index(feat))
+
 	# Check if any of requested features doesn't exist
 	f = [f for f in features if f not in feature_func]
 	if f:
@@ -161,6 +312,10 @@ def generateFeatures(features, data=None):
 
 	writeFileMapping(data)
 	writeThreadMapping(data)
+
+	if ngramFeatures:
+		ngramOpts = {i:i in ngramFeatures for i in ngramNames}
+		ngram_features(data, **ngramOpts)
 
 	# Generate features
 	for feature in features:
