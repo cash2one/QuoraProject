@@ -26,10 +26,10 @@ def graph(answerCounts):
 	plt.hist(answerCounts, bins=BIN_COUNT, range=(0,BIN_COUNT))
 
 	# Mean/Median lines
-	meanVal = mean(answerCounts)
-	medianVal = median(answerCounts)
-	plt.axhline(meanVal, linestyle='--', color='r', label="Mean")
-	plt.axhline(medianVal, linestyle='--', color='g', label="Median")
+	#meanVal = mean(answerCounts)
+	#medianVal = median(answerCounts)
+	#plt.axhline(meanVal, linestyle='--', color='r', label="Mean")
+	#plt.axhline(medianVal, linestyle='--', color='g', label="Median")
 
 	# Labels
 	plt.title("Number of Answers Quora Posts Get")
@@ -74,5 +74,5 @@ if __name__ == "__main__":
 		if fn.endswith(".comm") and fn.startswith("answer"):
 			numAnswers += 1
 
-# Print for reprocessing on local machine
-print(Counter(answerCounts))
+	# Print for reprocessing on local machine
+	print(Counter(answerCounts))
