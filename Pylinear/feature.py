@@ -130,9 +130,6 @@ def topics(data):
 ## NGRAM FEATURES
 ##
 
-def textFromSpan(comm, span):
-	return comm.text.encode('utf-8')[span.start:span.ending+1]
-
 def loadStopWords():
 	path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "stopwords.txt")
 	with open(path) as f:
@@ -145,9 +142,7 @@ def tokensFromComm(comm):
 		if not section.sentenceList is None:
 			for sentence in section.sentenceList:
 				for token in sentence.tokenization.tokenList.tokenList:
-					# I've never had to use "ISO-8859-1" before, but it works...
-					token = textFromSpan(comm, token.textSpan).strip().decode("ISO-8859-1")
-					token = token.replace("\n", "-NL-").replace(":", "-CLN-").replace(" ", "-SPC-").replace("#", "-PND-")
+					token = token.text.replace(":", "-CLN-").replace("#", "-PND-")
 					yield token
 					
 
