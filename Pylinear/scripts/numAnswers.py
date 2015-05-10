@@ -4,8 +4,20 @@ import re
 from collections import Counter
 from matplotlib import pyplot as plt
 
-def graph(x,y):
-	plt.bar(x,y)
+def graph(x1,y1,t1,x2,y2,t2):
+	width = 0.35
+	probs1 = list(map(lambda a: a/t1, y1))
+	probs2 = list(map(lambda a: a/t2, y2))
+
+	plt.bar(x2, probs2, width, color="y", label="P(A<X>)")
+	plt.bar(list(map(lambda a: a+width, x1)),probs1, width, color="b", label="P(A<x>|D)")
+
+	plt.legend()
+	plt.ylim([0,None])
+	plt.xlim([0,25])
+	plt.title("Probability a Thread has <X> Answers")
+	plt.xlabel("<X>")
+	plt.ylabel("Probability")
 	plt.show()
 
 if __name__ == '__main__':
@@ -16,16 +28,21 @@ if __name__ == '__main__':
 
 	lastThread = ""
 	numThreads = 0
+	numDetailThreads = 0
 	numAnswers = 0
 	hasDetails = False
-	data = []
+	answered = []
+	answeredDetails = []
 	for n, f in getDataFiles(DIR):
 		thread = n.split("/")[1]
 		if thread != lastThread:
+			print(thread)
 			lastThread = thread
+			numThreads += 1
+			answered.append(numAnswers)
 			if hasDetails:
-				numThreads += 1
-				data.append(numAnswers)
+				numDetailThreads += 1
+				answeredDetails.append(numAnswers)
 			numAnswers = 0
 			hasDetails = False
 		if re.search(r"answer\d+\.comm", n):
@@ -35,13 +52,21 @@ if __name__ == '__main__':
 			if len(comm.sectionList) > 1:
 				hasDetails = True
 
-	x = []
-	y = []
-	for k, v in Counter(data).items():
-		x.append(k)
-		y.append(v)
+	x1 = []
+	y1 = []
+	t1 = numThreads
+	for k, v in Counter(answered).items():
+		x1.append(k)
+		y1.append(v)
+
+	x2 = []
+	y2 = []
+	t2 = numDetailThreads
+	for k, v in Counter(answeredDetails).items():
+		x2.append(k)
+		y2.append(v)
 
 	print(x)
 	print(y)
 	print(numThreads)
-	#graph(x,y)
+	#graph(x1,y1,t1,x2,y2,t2)
