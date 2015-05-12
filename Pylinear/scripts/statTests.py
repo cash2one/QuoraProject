@@ -24,7 +24,7 @@ if __name__ == '__main__':
 	lastThread = ""
 	numAnswers = 0
 	first = True
-	hastDetails = False
+	hasDetails = False
 	for n, f in getDataFiles(DIR):
 		thread = n.split("/")[1]
 		if first:
