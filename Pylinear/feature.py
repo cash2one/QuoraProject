@@ -202,7 +202,7 @@ def ngram_features(DIR, ngram, noramlized_ngram, tfidf, cutofff=5):
 		tfidfOutFile = codecs.open("{}/features/tfidf.txt".format(DIR), 'w', 'utf-8')
 
 	print("Getting vocab")
-	vocab = getVocab(DIR, 0)
+	vocab = getVocab(DIR)
 
 	print("Getting file features")
 	numDocs = 0
@@ -245,7 +245,7 @@ def ngram_features(DIR, ngram, noramlized_ngram, tfidf, cutofff=5):
 		for k, v in tokens.items():
 			tf = v / sum(tokens.values())
 			# 1 + shouldn't be necessary, but you get div by 0 otherwise
-			idf = math.log(numDocs / (1 + len([True for i in docVocabs if k in i])))
+			idf = math.log(numDocs / (len([True for i in docVocabs if k in i])))
 			tfidf_val = tf * idf
 			results.append("TFIDF_{}:{}".format(k,tfidf_val))
 		line = ' '.join(results)
