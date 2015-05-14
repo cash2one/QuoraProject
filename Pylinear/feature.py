@@ -102,6 +102,21 @@ def has_answers(data):
 				found = True
 	outFile.close()
 
+def has_2Answers(data):
+	outFile = open("{}/features/has_2answers.txt".format(data), "w")
+	lastThread = ""
+	numAnswers = 0
+	for n, f in getDataFiles(data + "/data"):
+		split = n.split("/")
+		thread = split[1]
+		fn = split[2]
+		if thread != lastThread:
+			outFile.write("has_2answers:{}\n".format(1 if numAnswers >= 2 else 0))
+			lastThread = thread
+			numAnswers = 0
+		if fn.startswith("answer"):
+			numAnswers += 1
+
 def has_list(data):
 	outFile = open("{}/features/has_list.txt".format(data), 'w')
 	for name, data in getDataFiles(data + "/data"):
@@ -263,6 +278,7 @@ feature_func = {
 	"followers"       : followers,
 	"question_length" : question_length,
 	"has_answers"     : has_answers,
+	"has_2answers"    : has_2Answers,
 	"topics"          : topics,
 	"has_list"        : has_list,
 	"ngram"           : None,
