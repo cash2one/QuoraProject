@@ -97,11 +97,10 @@ def createEntry(name, dat, tarf):
 		"followers"  : data['data']['followers'],
 		"topics"     : data['data']['topics'],
 		"author"     : data['log']['author'] if 'log' in data and not data['log'] is None and 'author' in data['log'] else None,
-		"time"       : data['log']['time'] if 'log' in data and not data['log'] is None and 'time' in data['log'] else None,
+		"time"       : data['log']['date'] if 'log' in data and not data['log'] is None and 'date' in data['log'] else None,
 		"url"        : data['url'],
 		"numAnswers" : len(data['data']['answers']),
 		"hasDetails" : bool(data['data']['details'].strip()),
-		"hasList"    : data['data']['features']['hasList']
 	}
 	stringf = StringIO(json.dumps(qdata))
 	info = tarfile.TarInfo('{}/{}/metadata.json'.format(name[2], name))
@@ -123,7 +122,7 @@ def createEntry(name, dat, tarf):
 		adata = {
 			"upvotes" : answer['upvotes'],
 			"author"  : answer['author'],
-			"hasList" : answer['hasList']
+			"time"    : answer['time']
 		}
 		stringf = StringIO(json.dumps(adata))
 		info = tarfile.TarInfo('{}/{}/answer{}.json'.format(name[2], name, i))

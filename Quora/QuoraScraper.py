@@ -41,7 +41,6 @@ class _HTMLToText(HTMLParser):
 		HTMLParser.__init__(self)
 		self._buf = []
 		self.hide_output = False
-		self.hasList = False
 
 	def handle_starttag(self, tag, attrs):
 		# <p> and <br> add newline
@@ -49,8 +48,6 @@ class _HTMLToText(HTMLParser):
 			self._buf.append('\n')
 		elif tag in ('script', 'style'):
 			self.hide_output = True
-		elif tag in ('ol', 'ul'):
-			self.hasList = True
 
 	def handle_startendtag(self, tag, attrs):
 		if tag == 'br':
@@ -85,7 +82,7 @@ def dehtml(text):
 	parser = _HTMLToText()
 	parser.feed(text)
 	parser.close()
-	return parser.get_text(), {'hasList' : parser.hasList}
+	return parser.get_text()
 
 #############
 
@@ -474,16 +471,16 @@ class QuoraScraper:
 			answer = answer.cssselect('.ExpandedAnswer')[0]
 			text = answer.cssselect('div > div > div')
 			if text:
-				answer_text, features = dehtml(tostring(text[0]))
+				answer_text = dehtml(tostring(text[0]))
 			# TYPE-2 ANSWER
 			# Majority of questions
 			else:
 				s = tostring(answer)
 				# Messy way to remove the footer div thrown in at the end, but I don't know of anything better
 				s = re.sub(r'<div class="ContentFooter AnswerFooter">.*', '', s)
-				answer_text, features = dehtml(s)
+				answer_text = dehtml(s)
 
-			return answer_text, features
+			return answer_text
 
 	@classmethod
 	def getQuestion(cl, html, scrapeTime=None):
@@ -504,12 +501,12 @@ class QuoraScraper:
 		question = parsed('div.question_text_edit > h1')
 		if not question:
 			question = parsed('h1.review_question_text')
-		question, question_features = dehtml(tostring(question[0]))
+		question = dehtml(tostring(question[0]))
 		question = question.replace(u'\u2605', '', 1)
 
 
 		# Question details
-		details, detail_features = dehtml(tostring(parsed('.question_details > div')[0]))
+		details = dehtml(tostring(parsed('.question_details > div')[0]))
 
 		# Followers
 		followers = parsed('.follow_button .no_count') + parsed('.follow_button .count')
@@ -548,7 +545,7 @@ class QuoraScraper:
 			else:
 				author_info = None # User is anonymous
 
-			answer_text, answer_features = cl.getAnswerText(a)
+			answer_text = cl.getAnswerText(a)
 			if not answer_text:
 				logging.error("No answer text.")
 
@@ -560,12 +557,10 @@ class QuoraScraper:
 				'text'      : answer_text,
 				'upvotes'   : upvotes,
 				'time'      : date,
-				'hasList'   : answer_features['hasList']
 			})
 
 		ret = {
 			'question'  : question,
-			'features'  : {'hasList' : detail_features['hasList']},
 			'topics'    : topics,
 			'links'     : links,
 			'details'   : details,
