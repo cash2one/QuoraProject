@@ -5,3 +5,4 @@ twitterData
 results
 __pycache__
 *.pyc
+*.pdf
