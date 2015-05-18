@@ -54,6 +54,8 @@ if __name__ == '__main__':
 	genParser = subparsers.add_parser("gen", help=temp, description=temp)
 	genParser.add_argument('-f', '--features', required=True, nargs='+', help='features to generate')
 	genParser.add_argument('-d', '--data', default='splits/train', help='dataset to generate features for')
+	genParser.add_argument('-N', type=int, default=1, help="specify is using has_N_answers feature")
+	genParser.add_argument('-M', action='store_true', help="generate mapping files")
 
 	temp = "Combine feature templates"
 	templateParser = subparsers.add_parser("template", help=temp, description=temp)

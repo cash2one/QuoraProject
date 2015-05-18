@@ -6,6 +6,7 @@ import argparse
 import codecs
 import math
 from collections import Counter
+import re
 
 from concrete import Communication
 from thrift import TSerialization
@@ -84,26 +85,9 @@ def question_length(data):
 		outFile.write("question_length:{}\n".format(len(comm.text)))
 	outFile.close()
 
-def has_answers(data):
-	'''Generates binary feature file for wheather or not a question has answers'''
-	outFile = open("{}/features/has_answers.txt".format(data), 'w')
-	lastThread = ""
-	found = False
-	for name, _ in getDataFiles(data + "/data"):
-		split = name.split('/')
-		thread = split[1]
-		fn = split[2]
-		if thread != lastThread:
-			lastThread = thread
-			outFile.write("has_answers:{}\n".format(1 if found else 0))
-			found = False
-		if not found:
-			if fn.startswith('answer'):
-				found = True
-	outFile.close()
-
-def has_2Answers(data):
-	outFile = open("{}/features/has_2answers.txt".format(data), "w")
+def has_N_answers(data, N):
+	'''Generates binary feature file for wheather or not a question has N answers'''
+	outFile = open("{}/features/has_{}_answers.txt".format(data, N), "w")
 	lastThread = ""
 	numAnswers = 0
 	for n, f in getDataFiles(data + "/data"):
@@ -111,11 +95,12 @@ def has_2Answers(data):
 		thread = split[1]
 		fn = split[2]
 		if thread != lastThread:
-			outFile.write("has_2answers:{}\n".format(1 if numAnswers >= 2 else 0))
+			outFile.write("has_{}_answers:{}\n".format(N, 1 if numAnswers >= N else 0))
 			lastThread = thread
 			numAnswers = 0
-		if fn.startswith("answer"):
+		if re.match('answer[\d]+.comm', fn):
 			numAnswers += 1
+	outFile.write("has_{}_answers:{}\n".format(N, 1 if numAnswers >= N else 0))
 
 def has_list(data):
 	outFile = open("{}/features/has_list.txt".format(data), 'w')
@@ -277,8 +262,7 @@ stopWords = loadStopWords()
 feature_func = {
 	"followers"       : followers,
 	"question_length" : question_length,
-	"has_answers"     : has_answers,
-	"has_2answers"    : has_2Answers,
+	"has_N_answers"    : has_N_answers,
 	"topics"          : topics,
 	"has_list"        : has_list,
 	"ngram"           : None,
@@ -303,6 +287,8 @@ def generateFeatures(features, data=None):
 	## Args can be passed in as argparse instance or as individual params
 	if isinstance(features, argparse.Namespace):
 		data = features.data
+		N = features.N
+		M = features.M
 		features = features.features
 	##
 
@@ -321,8 +307,10 @@ def generateFeatures(features, data=None):
 		print("ERROR: The following feature(s) could not be generated: {}".format(', '.join(f)))
 		exit(1)
 
-	writeFileMapping(data)
-	writeThreadMapping(data)
+	if M:
+		print("Generating file mappings")
+		writeFileMapping(data)
+		writeThreadMapping(data)
 
 	if ngramFeatures:
 		ngramOpts = {i:i in ngramFeatures for i in ngramNames}
@@ -330,4 +318,8 @@ def generateFeatures(features, data=None):
 
 	# Generate features
 	for feature in features:
-		feature_func[feature](data)
+		print(feature)
+		if feature == 'has_N_answers':
+			feature_func[feature](data, N)
+		else:
+			feature_func[feature](data)
