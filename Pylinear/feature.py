@@ -102,17 +102,6 @@ def has_N_answers(data, N):
 			numAnswers += 1
 	outFile.write("has_{}_answers:{}\n".format(N, 1 if numAnswers >= N else 0))
 
-def has_list(data):
-	outFile = open("{}/features/has_list.txt".format(data), 'w')
-	for name, data in getDataFiles(data + "/data"):
-		if name.endswith("metadata.json"):
-			data = json.load(data)
-			if data['hasList']:
-				outFile.write('has_list:1\n')
-			else:
-				outFile.write('has_list:0\n')
-	outFile.close()
-
 def topics(data):
 	'''Generates feature file with binary feature for each topic.'''
 	outFile = codecs.open("{}/features/topics.txt".format(data), 'w', 'utf-8')
@@ -264,7 +253,6 @@ feature_func = {
 	"question_length" : question_length,
 	"has_N_answers"    : has_N_answers,
 	"topics"          : topics,
-	"has_list"        : has_list,
 	"ngram"           : None,
 	"norm_ngram"      : None,
 	"tfidf"           : None
