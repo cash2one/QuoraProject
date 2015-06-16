@@ -11,6 +11,7 @@ import re
 from concrete import Communication
 from thrift import TSerialization
 from thrift.protocol import TCompactProtocol
+import datetime
 
 ### HELPER ###
 
@@ -90,11 +91,15 @@ def has_N_answers(data, N):
 	outFile = open("{}/features/has_{}_answers.txt".format(data, N), "w")
 	lastThread = ""
 	numAnswers = 0
+	first = True
 	for n, f in getDataFiles(data + "/data"):
 		split = n.split("/")
 		thread = split[1]
 		fn = split[2]
-		if thread != lastThread:
+		if first:
+			first = False
+			lastThread = thread
+		elif thread != lastThread:
 			outFile.write("has_{}_answers:{}\n".format(N, 1 if numAnswers >= N else 0))
 			lastThread = thread
 			numAnswers = 0
@@ -251,7 +256,7 @@ stopWords = loadStopWords()
 feature_func = {
 	"followers"       : followers,
 	"question_length" : question_length,
-	"has_N_answers"    : has_N_answers,
+	"has_N_answers"   : has_N_answers,
 	"topics"          : topics,
 	"ngram"           : None,
 	"norm_ngram"      : None,
