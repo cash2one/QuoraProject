@@ -27,7 +27,12 @@ def getDataFiles(data):
 		if not fn.endswith(".tar.gz"):
 			continue
 		f = tarfile.open(fn, "r:gz")
+		files = set()
 		for tarfn in f.getmembers():
+			if tarfn.name in files:
+				continue
+			else:
+				files.add(tarfn.name)
 			tarf = f.extractfile(tarfn)
 			yield (tarfn.name, tarf)
 			tarf.close()
