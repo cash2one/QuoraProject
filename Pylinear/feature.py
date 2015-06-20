@@ -19,6 +19,8 @@ def getFiles(d):
 	'''Recursively lists files in directory'''
 	for i in os.walk(d):
 		for j in i[2]:
+			if j.endswith('.DS_Store'):
+				continue
 			yield '{}/{}'.format(i[0], j)
 
 def getDataFiles(data):
