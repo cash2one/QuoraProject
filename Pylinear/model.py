@@ -29,6 +29,18 @@ def getFeatureData(data, name):
 			yield [feature.split(':') for feature in entry]
 			line = f.readline()
 
+def makeIDSet(data, train, features):
+	'''Returns set of ids present in all given feature files.'''
+	with open('{}/features/{}.list.txt'.format(data, train)) as f:
+		d = f.read()
+		ret = set(json.loads(d))
+
+	for name in features:
+		with open('{}/features/{}.list.txt'.format(data, name)) as f:
+			temp = set(json.load(f))
+			ret &= temp
+	return ret
+
 ### GLOBALS ###
 
 # Path executables
@@ -56,6 +68,9 @@ def combineFeatures(data, train=None, featureNames=None, idFile=None):
 	trainData = getFeatureData(data, train)
 	featureData = [getFeatureData(data, f) for f in featureNames]
 
+	# Create set of ids present in all feature files
+	idSet = makeIDSet(data, train, featureNames)
+
 	# Output directory
 	outDir = '{}/results/{},{}'.format(data, train,','.join(featureNames))
 	if not os.path.isdir(outDir):
@@ -74,33 +89,58 @@ def combineFeatures(data, train=None, featureNames=None, idFile=None):
 		featureIDs = {}
 		featureC = 1
 
-	# Create libsvm input file
-	first = True
-	for trainEntry in trainData:
-		s = '{} '.format(trainEntry[0][1])
-		for f in featureData:
-			features = f.next()
-			featureTuples = []
-			for feature in features:
-				if not feature[0] in featureIDs:
-					if ignoreNew:
-						continue
-					featureIDs[feature[0]] = featureC
-					featureC += 1
-				i = featureIDs[feature[0]]
-				if feature[0]:
-					featureTuples.append((i, feature[1]))
-		# Feature IDs need to be in accending order
-		featureTuples.sort()
-		for ID, featureVal in featureTuples:
-			s += '{}:{} '.format(ID, featureVal)
 
-		# Add comment to first line describing what features were used
-		if first:
-			s += " # {},{}".format(train, ','.join(featureNames))
-			first = False
-		s = s.strip()
-		outFile.write(s + '\n')
+	# Join feature files
+	s = ''
+	first = True
+	try:
+		while True:
+			# Get next valid feature line from 'to predict'
+			trainLineID = ''
+			while trainLineID not in idSet:
+				trainEntry = trainData.next()
+				trainLineID = trainEntry[0][0]
+			s += '{} '.format(trainEntry[1][1])
+
+			# Get next valid feature lines from 'predictors'
+			featureTuples = []
+			for f in featureData:
+				featLineID = ''
+				while featLineID not in idSet:
+					featEntry = f.next()
+					featLineID = featEntry[0][0]
+				assert trainLineID == featLineID
+				features = featEntry[1:]
+
+				# Each feature on feature line
+				for feature in features:
+					if not feature[0] in featureIDs:
+						# Skip feature if not present in train
+						if ignoreNew:
+							continue
+						# Add feature to index
+						featureIDs[feature[0]] = featureC
+						featureC += 1
+					i = featureIDs[feature[0]]
+					if feature[0]: # I forget why this check is necessary but now I'm afraid to remove it...
+						featureTuples.append((i, feature[1]))
+
+			# Feature IDs need to be in accending order
+			featureTuples.sort()
+			for ID, featureVal in featureTuples:
+				s += '{}:{} '.format(ID, featureVal)
+
+			# Add comment to first line describing what features were used
+			if first:
+				s += " # {},{}".format(train, ','.join(featureNames))
+				first = False
+
+			s = s.strip()
+			outFile.write(s + '\n')
+			s = ''
+	except StopIteration:
+		pass
+
 	outFile.close()
 
 	# Write out name -> ID mapping

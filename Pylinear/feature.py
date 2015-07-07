@@ -72,33 +72,44 @@ def writeThreadMapping(DIR):
 
 def followers(data):
 	'''Generates feature file for number of followers a question has'''
+	dirList = set()
 	outFile = open("{}/features/followers.txt".format(data), 'w')
 	for name, content in getDataFiles(data + "/data"):
+		dataDir = name.split('/')[1]
+		dirList.add(dataDir)
 		if not name.endswith("metadata.json"):
 			continue
 		content = content.read()
 		content = json.loads(content)
-		outFile.write("followers:{}\n".format(content["followers"]))
+		outFile.write("{} followers:{}\n".format(dataDir, content["followers"]))
 	outFile.close()
+	with open('{}/features/followers.list.txt'.format(data), 'w') as f:
+		json.dump(list(dirList), f)
 
 def question_length(data):
 	'''Generates feature file for length of question'''
+	dirList = set()
 	outFile = open("{}/features/question_length.txt".format(data), 'w')
 	for name, content in getDataFiles(data + "/data"):
+		dataDir = name.split('/')[1]
+		dirList.add(dataDir)
 		if not name.endswith("question.comm"):
 			continue
 		content = content.read()
 		comm = commFromData(content)
 
-		outFile.write("question_length:{}\n".format(len(comm.text)))
+		outFile.write("{} question_length:{}\n".format(dataDir, len(comm.text)))
 	outFile.close()
+	with open('{}/features/question_length.list.txt'.format(data), 'w') as f:
+		json.dump(list(dirList), f)
 
 def has_N_answers(data, N):
 	'''Generates binary feature file for wheather or not a question has N answers'''
-	outFile = open("{}/features/has_{}_answers.txt".format(data, N), "w")
 	lastThread = ""
 	numAnswers = 0
 	first = True
+	dirList = set()
+	outFile = open("{}/features/has_{}_answers.txt".format(data, N), "w")
 	for n, f in getDataFiles(data + "/data"):
 		split = n.split("/")
 		thread = split[1]
@@ -107,25 +118,35 @@ def has_N_answers(data, N):
 			first = False
 			lastThread = thread
 		elif thread != lastThread:
-			outFile.write("has_{}_answers:{}\n".format(N, 1 if numAnswers >= N else 0))
+			dirList.add(lastThread)
+			outFile.write("{} has_{}_answers:{}\n".format(lastThread, N, 1 if numAnswers >= N else 0))
 			lastThread = thread
 			numAnswers = 0
 		if re.match('answer[\d]+.comm', fn):
 			numAnswers += 1
-	outFile.write("has_{}_answers:{}\n".format(N, 1 if numAnswers >= N else 0))
+	outFile.write("{} has_{}_answers:{}\n".format(lastThread, N, 1 if numAnswers >= N else 0))
+	outFile.close()
+	with open('{}/features/has_{}_answers.list.txt'.format(data, N), 'w') as f:
+		json.dump(list(dirList), f)
 
 def topics(data):
 	'''Generates feature file with binary feature for each topic.'''
+	dirList = set()
 	outFile = codecs.open("{}/features/topics.txt".format(data), 'w', 'utf-8')
 	for name, content in getDataFiles(data + "/data"):
 		if not name.endswith("metadata.json"):
 			continue
+		dataDir = name.split('/')[1]
+		dirList.add(dataDir)
 		content = content.read()
 		content = json.loads(content)
+		outFile.write('{} '.format(dataDir))
 		for topic in content["topics"]:
 			outFile.write("{}:1 ".format(topic[1:]))
 		outFile.write("\n")
 	outFile.close()
+	with open('{}/features/topics.list.txt'.format(data), 'w') as f:
+		json.dump(list(dirList), f)
 
 ##
 ## NGRAM FEATURES
@@ -138,7 +159,6 @@ def loadStopWords():
 	return lines
 
 def tokensFromComm(comm):
-	global stopWords
 	for section in comm.sectionList:
 		if not section.sentenceList is None:
 			for sentence in section.sentenceList:
@@ -149,6 +169,8 @@ def tokensFromComm(comm):
 
 def getVocab(data, CUTOFF=5):
 	global stopWords
+	if stopWords is None:
+		stopWords = loadStopWords()
 
 	tokenDict = {}
 	vocab = set()
@@ -172,6 +194,9 @@ def getVocab(data, CUTOFF=5):
 
 def getDocumentVocab(comm, vocab=None):
 	global stopWords
+	if stopWords is None:
+		stopWords = loadStopWords()
+
 	docVocab = set()
 	for token in tokensFromComm(comm):
 		if vocab is not None and token not in vocab:
@@ -207,9 +232,13 @@ def ngram_features(DIR, ngram, noramlized_ngram, tfidf, cutofff=5):
 
 	print("Getting file features")
 	numDocs = 0
-	for n, f in getDataFiles(DIR + "/data"):
-		if not n.endswith("question.comm"):
+	dirList = set()
+	for name, f in getDataFiles(DIR + "/data"):
+		if not name.endswith("question.comm"):
 			continue
+		dataDir = name.split('/')[1]
+		dirList.add(dataDir)
+
 		comm = commFromData(f.read())
 
 		numDocs += 1
@@ -218,18 +247,23 @@ def ngram_features(DIR, ngram, noramlized_ngram, tfidf, cutofff=5):
 
 		if ngram:
 			feats = tokenFeatures(comm, vocab)
-			line = " ".join(["NGRAM_{}:{}".format(k,v) for k, v in feats.items()])
+			line = "{} ".format(dataDir) + " ".join(["NGRAM_{}:{}".format(k,v) for k, v in feats.items()])
 			ngramOutFile.write(line + "\n")
 			
 		if noramlized_ngram:
 			feats = tokenFeatures(comm, vocab, True)
-			line = " ".join(["NNGRAM_{}:{}".format(k,v) for k, v in feats.items()])
+			line = "{} ".format(dataDir) + " ".join(["NNGRAM_{}:{}".format(k,v) for k, v in feats.items()])
 			normalizedNgram.write(line + "\n")
 
 	if ngram:
 		ngramOutFile.close()
+		with open('{}/features/ngram.list.txt'.format(N), 'w') as f:
+			json.dump(list(dirList), f)
+
 	if noramlized_ngram:
 		normalizedOutFile.close()
+		with open('{}/features/normalizedNgram.list.txt'.format(N), 'w') as f:
+			json.dump(list(dirList), f)
 
 	if not tfidf:
 		return
@@ -245,16 +279,16 @@ def ngram_features(DIR, ngram, noramlized_ngram, tfidf, cutofff=5):
 		tokens = Counter(tokens)
 		for k, v in tokens.items():
 			tf = v / sum(tokens.values())
-			# 1 + shouldn't be necessary, but you get div by 0 otherwise
 			idf = math.log(numDocs / (len([True for i in docVocabs if k in i])))
 			tfidf_val = tf * idf
 			results.append("TFIDF_{}:{}".format(k,tfidf_val))
-		line = ' '.join(results)
+		line = "{} ".format(dataDir) + ' '.join(results)
 		tfidfOutFile.write(line + "\n")
 	tfidfOutFile.close()
+	with open('{}/features/tfidf.list.txt'.format(N), 'w') as f:
+		json.dump(list(dirList), f)
 
-stopWords = loadStopWords()
-
+stopWords = None
 ##
 ## End NGRAM features
 ##
