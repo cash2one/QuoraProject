@@ -5,8 +5,14 @@ def FMeasure(pres, recall, beta=1):
 
 if __name__ == '__main__':
 	from sys import argv
-	real = open(argv[0])
-	pred = open(argv[1])
+	import os
+	if len(argv) == 1:
+		real = open(os.path.join(argv[0], 'data.txt'))
+		pred = open(os.path.join(argv[0], 'predict.out'))
+	else:
+		real = open(argv[0])
+		pred = open(argv[1])
+
 	realLine = real.readline().split()[0].strip()
 	predLine = pred.readline().strip()
 	total = 0
