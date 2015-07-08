@@ -9,11 +9,11 @@ if __name__ == '__main__':
 	if len(argv) < 2:
 		print("Need argument for prediction output")
 	elif len(argv) == 2:
-		real = open(os.path.join(argv[0], 'data.txt'))
-		pred = open(os.path.join(argv[0], 'predict.out'))
+		real = open(os.path.join(argv[1], 'data.txt'))
+		pred = open(os.path.join(argv[1], 'predict.out'))
 	else:
-		real = open(argv[0])
-		pred = open(argv[1])
+		real = open(argv[1])
+		pred = open(argv[2])
 
 	realLine = real.readline().split()[0].strip()
 	predLine = pred.readline().strip()
