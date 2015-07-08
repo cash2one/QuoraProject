@@ -9,33 +9,34 @@ if __name__ == '__main__':
 	if len(argv) < 2:
 		print("Need argument for prediction output")
 	elif len(argv) == 2:
-		real = open(os.path.join(argv[1], 'data.txt'))
-		pred = open(os.path.join(argv[1], 'predict.out'))
+		realNm = os.path.join(argv[1], 'data.txt')
+		predNm = os.path.join(argv[1], 'predict.out')
 	else:
-		real = open(argv[1])
-		pred = open(argv[2])
+		realNm = argv[1]
+		predNm = argv[2]
 
-	realLine = real.readline().split()[0].strip()
-	predLine = pred.readline().strip()
+	with open(realNm) as f:
+		real = [i.split(' ')[0] for i in f.read().strip().split('\n')]
+	with open(predNm) as f:
+		pred = f.read().strip().split('\n')
+
 	total = 0
 	tp    = 0
 	tn    = 0
 	fp    = 0
 	fn    = 0
-	while realLine:
+	for realLn, predLn in zip(real,pred):
 		total += 1
-		if realLine == predLine:
-			if predLine == '1':
+		if realLn == predLn:
+			if predLn == '1':
 				tp += 1
 			else:
 				tn += 1
 		else:
-			if predLine == '1':
+			if predLn == '1':
 				fp += 1
 			else:
 				fn += 1
-		realLine = real.readline().split()[0].strip()
-		predLine = pred.readline().strip()
 
 	pres   = tp / (tp + fp)
 	recall = tp / (tp + fn)
