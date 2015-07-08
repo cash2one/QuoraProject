@@ -6,7 +6,9 @@ def FMeasure(pres, recall, beta=1):
 if __name__ == '__main__':
 	from sys import argv
 	import os
-	if len(argv) == 1:
+	if len(argv) < 2:
+		print("Need argument for prediction output")
+	elif len(argv) == 2:
 		real = open(os.path.join(argv[0], 'data.txt'))
 		pred = open(os.path.join(argv[0], 'predict.out'))
 	else:
