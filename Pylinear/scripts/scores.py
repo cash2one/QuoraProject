@@ -38,9 +38,20 @@ if __name__ == '__main__':
 			else:
 				fn += 1
 
-	pres   = 100 * tp / (tp + fp)
-	recall = 100 * tp / (tp + fn)
+	try:
+		pres = 100 * tp / (tp + fp)
+	except ZeroDivisionError:
+		pres = float('inf')
+	try:
+		recall = 100 * tp / (tp + fn)
+	except ZeroDivisionError:
+		recall = float('inf')
+
 	print("Accuracy   {:.2f}%".format(100 * (tp + tn) / total))
 	print("Precision  {:.2f}%".format(pres))
 	print("Recall     {:.2f}%".format(recall))
-	print("F1         {:.2f}%".format(FMeasure(pres, recall)))
+	if pres and recall:
+		F = FMeasure(pres, recall)
+	else:
+		F = float('inf')
+	print("F1         {:.2f}%".format(F))
