@@ -40,7 +40,7 @@ if __name__ == '__main__':
 
 	pres   = tp / (tp + fp)
 	recall = tp / (tp + fn)
-	print("Accuracy   {}%".format((tp + tn)) / total)
+	print("Accuracy   {}%".format((tp + tn) / total))
 	print("Precision  {}%".format(pres))
 	print("Recall     {}%".format(recall))
 	print("F1         {}%".format(FMeasure(pres, recall)))
