@@ -1,7 +1,7 @@
 from __future__ import division
 
 def FMeasure(pres, recall, beta=1):
-	(1 + beta**2) * pres * recall / (beta**2 * pres + recall)
+	return (1 + beta**2) * pres * recall / (beta**2 * pres + recall)
 
 if __name__ == '__main__':
 	from sys import argv
@@ -38,9 +38,9 @@ if __name__ == '__main__':
 			else:
 				fn += 1
 
-	pres   = tp / (tp + fp)
-	recall = tp / (tp + fn)
-	print("Accuracy   {}%".format((tp + tn) / total))
+	pres   = 100 * tp / (tp + fp)
+	recall = 100 * tp / (tp + fn)
+	print("Accuracy   {:.2f}%".format(100 * (tp + tn) / total))
 	print("Precision  {}%".format(pres))
 	print("Recall     {}%".format(recall))
 	print("F1         {}%".format(FMeasure(pres, recall)))
