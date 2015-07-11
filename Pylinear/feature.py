@@ -216,7 +216,7 @@ def tokenFeatures(comm, vocab, normalized=False):
 	return tokens
 
 
-def ngram_features(DIR, ngram, noramlized_ngram, tfidf, cutofff=5):
+def ngram_features(DIR, N, ngram, noramlized_ngram, tfidf, cutofff=5):
 	docVocabs = []
 
 	# Output files
@@ -348,7 +348,7 @@ def generateFeatures(features, data=None):
 
 	if ngramFeatures:
 		ngramOpts = {i:i in ngramFeatures for i in ngramNames}
-		ngram_features(data, **ngramOpts)
+		ngram_features(data, N, **ngramOpts)
 
 	# Generate features
 	for feature in features:
