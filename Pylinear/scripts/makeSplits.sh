@@ -1,22 +1,27 @@
-#!/usr/bin/bash
+#!/bin/bash
 copyDir() {
 	cp -r "/export/a04/wpovell/annotated_data/$2" /export/a04/wpovell/splits/$1/data/
 }
 
-rm -r /export/a04/wpovell/tune/data
+echo "Tune"
+rm -r /export/a04/wpovell/splits/tune/data
 copyDir tune 0
 
-rm -r /export/a04/wpovell/dev/data
+echo "Dev"
+rm -r /export/a04/wpovell/splits/dev/data
 copyDir dev 1
 
-rm -r /export/a04/wpovell/test/data
+echo "Test"
+rm -r /export/a04/wpovell/splits/test/data
 copyDir test 2
 
-rm -r /export/a04/wpovell/train/data
+echo "Train"
+rm -r /export/a04/wpovell/splits/train/data
 for i in {3..9}; do
 	copyDir train $i
 done;
 
-for i in {a..f} do
+for i in {a..f}; do
 	copyDir train $i
 done;
+echo "Done"
