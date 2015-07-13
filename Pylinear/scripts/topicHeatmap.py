@@ -1,53 +1,67 @@
+from __future__ import division
+
 import json
+import pickle
 import itertools
 import numpy as np
-import matplotlib.pyplot as plt
+import matplotlib
 matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 
 from Pylinear.feature import getDataFiles
 
-def plot(heatmap, sortedTopics, n=None):
-	labels=False
+def plot(sortedTopics, topicPairs, total, n=None):
+	makeLabels=False
 	if not n is None:
 		sortedTopics = sortedTopics[:n]
-		labels = True
+		makeLabels = True
 
 	heatmap = []
 	for y, (_, i) in enumerate(sortedTopics):
 		heatmap.append([])
 		for x, (_, j) in enumerate(sortedTopics):
+			if i == j:
+				heatmap[y].append(np.nan)
+				continue
+
 			key = tuple(sorted([i, j]))
 			if key in topicPairs:
-				v = topicPairs[key]
+				v = 100 * topicPairs[key] / total
 			else:
 				v = 0
 			heatmap[y].append(v)
 
 	heatmap = np.array(heatmap)
+
 	fig, ax = plt.subplots()
+	c = ax.imshow(heatmap, interpolation='nearest', vmin=0, vmax=100)
+	fig.colorbar(c)
 
-	ax.pcolor(heatmap)
-
-	# For top 10 #
-	labels = [i for _, i in sortedTopics]
-	ax.set_xticks(np.arange(heatmap.shape[0])+0.5, minor=False)
-	ax.set_yticks(np.arange(heatmap.shape[1])+0.5, minor=False)
-	ax.invert_yaxis()
 	ax.xaxis.tick_top()
-	if labels:
+	if makeLabels:
+		ax.set_xticks(np.arange(heatmap.shape[0]), minor=False)
+		ax.set_yticks(np.arange(heatmap.shape[1]), minor=False)
+		labels = [i[1:] for _, i in sortedTopics]
 		ax.set_xticklabels(labels, minor=False)
 		ax.set_yticklabels(labels, minor=False)
 		plt.xticks(rotation=90)
-	plt.savefig('topicHeatmap.png')
+		plt.tight_layout()
+		plt.savefig('topicHeatmapTop.png')
+	else:
+		fig.patch.set_visible(False)
+		plt.axis('off')
+		plt.savefig('topicHeatmap.png')
 
 if __name__ == '__main__':
 
 	topicPairs = {}
 	topicCounts = {}
 
+	total = 0
 	for n, f in getDataFiles('/export/a04/wpovell/splits/train'):
 		if not n.endswith('metadata.json'):
 			continue
+		total += 1
 		topics = json.load(f)['topics']
 		for i in topics:
 			if not i in topicCounts:
@@ -63,7 +77,8 @@ if __name__ == '__main__':
 	sortedTopics = [(v, k) for k, v in topicCounts.items()]
 	sortedTopics.sort(reverse=True)
 
-	print(json.dumps(sortedTopics))
-	print(json.dumps(topicPairs))
+	with open('topicHeatmapData.pckl', 'wb') as f:
+		pickle.dump([sortedTopics,topicPairs,total], f)
 
-	#plot(sortedTopics, topicPairs)
+	plot(sortedTopics, topicPairs, total)
+	plot(sortedTopics, topicPairs, total, n=10)
