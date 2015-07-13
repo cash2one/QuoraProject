@@ -26,7 +26,7 @@ if __name__ == '__main__':
 	topicPairs = {}
 	topicCounts = {}
 
-	for n, f in getDataFiles('splits/train'):#'/export/a04/wpovell/splits/train'):
+	for n, f in getDataFiles('/export/a04/wpovell/splits/train'):
 		if not n.endswith('metadata.json'):
 			continue
 		topics = json.load(f)['topics']
