@@ -1,10 +1,28 @@
 import json
 import itertools
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
+matplotlib.use('Agg')
+
 from Pylinear.feature import getDataFiles
 
-def plot(heatmap, sortedTopics):
+def plot(heatmap, sortedTopics, n=None):
+	labels=False
+	if not n is None:
+		sortedTopics = sortedTopics[:n]
+		labels = True
+
+	heatmap = []
+	for y, (_, i) in enumerate(sortedTopics):
+		heatmap.append([])
+		for x, (_, j) in enumerate(sortedTopics):
+			key = tuple(sorted([i, j]))
+			if key in topicPairs:
+				v = topicPairs[key]
+			else:
+				v = 0
+			heatmap[y].append(v)
+
 	heatmap = np.array(heatmap)
 	fig, ax = plt.subplots()
 
@@ -16,10 +34,11 @@ def plot(heatmap, sortedTopics):
 	ax.set_yticks(np.arange(heatmap.shape[1])+0.5, minor=False)
 	ax.invert_yaxis()
 	ax.xaxis.tick_top()
-	ax.set_xticklabels(labels, minor=False)
-	ax.set_yticklabels(labels, minor=False)
-	plt.xticks(rotation=90)
-	plt.show()
+	if labels:
+		ax.set_xticklabels(labels, minor=False)
+		ax.set_yticklabels(labels, minor=False)
+		plt.xticks(rotation=90)
+	plt.savefig('topicHeatmap.png')
 
 if __name__ == '__main__':
 
@@ -44,22 +63,7 @@ if __name__ == '__main__':
 	sortedTopics = [(v, k) for k, v in topicCounts.items()]
 	sortedTopics.sort(reverse=True)
 
-	# For top 10 #
-	sortedTopics = sortedTopics[:10]
-	##############
-
-	heatmap = []
-	for y, (_, i) in enumerate(sortedTopics):
-		heatmap.append([])
-		for x, (_, j) in enumerate(sortedTopics):
-			key = tuple(sorted([i, j]))
-			if key in topicPairs:
-				v = topicPairs[key]
-			else:
-				v = 0
-			heatmap[y].append(v)
-	print(json.dumps(heatmap))
-	print()
 	print(json.dumps(sortedTopics))
+	print(json.dumps(topicPairs))
 
-	#plot(heatmap, sortedTopics)
+	#plot(sortedTopics, topicPairs)
