@@ -10,31 +10,29 @@ import matplotlib.pyplot as plt
 
 from Pylinear.feature import getDataFiles
 
-def plot(sortedTopics, topicPairs, total, n=None):
+def plot(sortedTopics, topicPairs, topicCounts, total, n=None):
 	makeLabels=False
 	if not n is None:
 		sortedTopics = sortedTopics[:n]
 		makeLabels = True
 
 	heatmap = []
+	#P(y|x)
 	for y, (_, i) in enumerate(sortedTopics):
 		heatmap.append([])
 		for x, (_, j) in enumerate(sortedTopics):
-			if i == j:
-				heatmap[y].append(np.nan)
-				continue
-
 			key = tuple(sorted([i, j]))
-			if key in topicPairs:
-				v = 100 * topicPairs[key] / total
+			if x == y:
+				v = np.nan
+			elif key in topicPairs:
+				v = 100 * topicPairs[key] / topicCounts[j]
 			else:
 				v = 0
 			heatmap[y].append(v)
 
 	heatmap = np.array(heatmap)
-
 	fig, ax = plt.subplots()
-	c = ax.imshow(heatmap, interpolation='nearest', vmin=0, vmax=100)
+	c = ax.imshow(heatmap, interpolation='nearest', vmin=0, vmax=100, cmap=plt.get_cmap('coolwarm'))
 	fig.colorbar(c)
 
 	ax.xaxis.tick_top()
@@ -48,8 +46,6 @@ def plot(sortedTopics, topicPairs, total, n=None):
 		plt.tight_layout()
 		plt.savefig('topicHeatmapTop.png')
 	else:
-		fig.patch.set_visible(False)
-		plt.axis('off')
 		plt.savefig('topicHeatmap.png')
 
 if __name__ == '__main__':
@@ -78,7 +74,7 @@ if __name__ == '__main__':
 	sortedTopics.sort(reverse=True)
 
 	with open('topicHeatmapData.pckl', 'wb') as f:
-		pickle.dump([sortedTopics,topicPairs,total], f)
+		pickle.dump([sortedTopics,topicPairs,topicCounts,total], f)
 
-	plot(sortedTopics, topicPairs, total)
-	plot(sortedTopics, topicPairs, total, n=10)
+	plot(sortedTopics, topicPairs, topicCounts, total)
+	plot(sortedTopics, topicPairs, topicCounts, total, n=10)
