@@ -6,7 +6,8 @@
 #$ -j y -o /export/a04/wpovell/logs
 
 copyDir() {
-	cp -r "/export/a04/wpovell/annotated_data/$2/" /export/a04/wpovell/splits/$1/data/
+    mkdir -p /export/a04/wpovell/splits/$1/data/
+    cp -ar /export/a04/wpovell/annotated_data/$2/ /export/a04/wpovell/splits/$1/data/$2
 }
 
 echo "Tune"
