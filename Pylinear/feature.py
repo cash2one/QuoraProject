@@ -268,7 +268,6 @@ def ngram_features(DIR, N, ngram, noramlized_ngram, tfidf, cutofff=5):
 	if not tfidf:
 		return
 
-	tfidfOutFile = codecs.open("{}/features/tfidf.txt".format(DIR), 'w', 'utf-8')
 	results = []
 	for n, f in getDataFiles(DIR + "/data"):
 		if not n.endswith("question.comm"):
