@@ -1,6 +1,12 @@
 #!/bin/bash
+#$ -cwd
+#$ -V
+#$ -N makeSplits
+#$ -S /bin/bash
+#$ -j y -o /export/a04/wpovell/logs
+
 copyDir() {
-	cp -r "/export/a04/wpovell/annotated_data/$2" /export/a04/wpovell/splits/$1/data/
+	cp -r "/export/a04/wpovell/annotated_data/$2/" /export/a04/wpovell/splits/$1/data/
 }
 
 echo "Tune"
