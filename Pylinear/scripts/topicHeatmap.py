@@ -46,6 +46,7 @@ def plot(sortedTopics, topicPairs, topicCounts, total, n=None):
 		plt.tight_layout()
 		plt.savefig('topicHeatmapTop.png')
 	else:
+		fig.patch.set_visible(False)
 		plt.savefig('topicHeatmap.png')
 
 if __name__ == '__main__':
