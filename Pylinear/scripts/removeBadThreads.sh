@@ -10,7 +10,7 @@ threads="709f97e52894d9843f5b6523b8bc481f
 
 rmFromArchive() {
 	gunzip $1
-	tar --delete --file=${1:0:-3} ${2:2:1}/$2
+	tar --delete --file=${1:0:-3} $2
 	gzip ${1:0:-3}
 }
 
