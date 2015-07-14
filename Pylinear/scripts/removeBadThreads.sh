@@ -9,11 +9,8 @@ threads="709f97e52894d9843f5b6523b8bc481f
 4e78b5b4e25d9b578500f7b004cdbaab"
 
 rmFromArchive() {
-	echo "gunzip $1"
 	gunzip $1
-	echo "tar --delete --file=${1:0:-3} ${2:2:1}/$2"
 	tar --delete --file=${1:0:-3} ${2:2:1}/$2
-	echo "gzip ${1:0:-3}"
 	gzip ${1:0:-3}
 }
 
@@ -22,4 +19,16 @@ for i in $threads; do
 	thread=${i:2:1}/$i
 	rmFromArchive /export/a04/wpovell/compressed_data/$file $thread
 	rmFromArchive /export/a04/wpovell/annotated_data/$file $thread
+	if [ -z $(tar -tzf /export/a04/wpovell/compressed_data/$file | grep $i) ]
+	then
+	  echo "SUCCESS: $i"
+	else
+	  echo "FAILURE: $i"
+	fi
+	if [ -z $(tar -tzf /export/a04/wpovell/annotated_data/$file | grep $i) ]
+	then
+	  echo "SUCCESS: $i"
+	else
+	  echo "FAILURE: $i"
+	fi
 done;
