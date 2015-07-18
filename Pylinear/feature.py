@@ -148,6 +148,48 @@ def topics(data):
 	with open('{}/features/topics.list.txt'.format(data), 'w') as f:
 		json.dump(list(dirList), f)
 
+def time_to_answer(data):
+	'''Generates feature of the number of days it took for a question to be answered'''
+	lastThread = ""
+	answer_times = []
+	question_time = None
+	first = True
+	dirList = set()
+	outFile = open('{}/features/time_to_answer.txt'.format(data), 'w')
+	for n, f in getDataFiles(data + "/data"):
+		split = n.split("/")
+		thread = split[1]
+		fn = split[2]
+		if thread != lastThread:
+			if first:
+				first = False
+			elif len(answer_times) != 0 and not question_time is None:
+					answer_time = min(answer_times)
+					d = int(datetime.timedelta(seconds=(answer_time - question_time)).total_seconds() / 60 / 60)
+					if d >= 0:
+						dirList.add(lastThread)
+						outFile.write('{} time_to_answer:{}\n'.format(lastThread, d))
+					else:
+						print("Bad thread :(")
+			else:
+				print(lastThread)
+			lastThread = thread
+			question_time = None
+			answer_times = []
+		if re.match('answer[\d]+.json', fn):
+			answerData = json.load(f)
+			t = answerData['time']
+			if not t is None:
+				answer_times.append(answerData['time'])
+		if fn.endswith('metadata.json'):
+			questionData = json.load(f)
+			question_time = questionData['postTime']
+			url = questionData['url']
+
+	outFile.close()
+	with open('{}/features/time_to_answer.list.txt'.format(data), 'w') as f:
+		json.dump(list(dirList),f)
+
 ##
 ## NGRAM FEATURES
 ##
@@ -163,7 +205,7 @@ def tokensFromComm(comm):
 		if not section.sentenceList is None:
 			for sentence in section.sentenceList:
 				for token in sentence.tokenization.tokenList.tokenList:
-					token = token.text.replace(":", "-CLN-").replace("#", "-PND-")
+					token = token.text.replace(":", "-CLN-").replace("#", "-PND-").replace(' ', '-SPC-')
 					yield token
 					
 
@@ -216,14 +258,12 @@ def tokenFeatures(comm, vocab, normalized=False):
 	return tokens
 
 
-def ngram_features(DIR, N, ngram, noramlized_ngram, tfidf, cutofff=5):
+def ngram_features(DIR, ngram=False, tfidf=False, cutofff=5):
 	docVocabs = []
 
 	# Output files
 	if ngram:
 		ngramOutFile = codecs.open("{}/features/ngram.txt".format(DIR), 'w', 'utf-8')
-	if noramlized_ngram:
-		normalizedOutFile = codecs.open("{}/features/normalizedNgram.txt".format(DIR), 'w', 'utf-8')
 	if tfidf:
 		tfidfOutFile = codecs.open("{}/features/tfidf.txt".format(DIR), 'w', 'utf-8')
 
@@ -249,22 +289,14 @@ def ngram_features(DIR, N, ngram, noramlized_ngram, tfidf, cutofff=5):
 			feats = tokenFeatures(comm, vocab)
 			line = "{} ".format(dataDir) + " ".join(["NGRAM_{}:{}".format(k,v) for k, v in feats.items()])
 			ngramOutFile.write(line + "\n")
-			
-		if noramlized_ngram:
-			feats = tokenFeatures(comm, vocab, True)
-			line = "{} ".format(dataDir) + " ".join(["NNGRAM_{}:{}".format(k,v) for k, v in feats.items()])
-			normalizedNgram.write(line + "\n")
 
 	if ngram:
 		ngramOutFile.close()
-		with open('{}/features/ngram.list.txt'.format(N), 'w') as f:
+		with open('{}/features/ngram.list.txt'.format(DIR), 'w') as f:
 			json.dump(list(dirList), f)
 
-	if noramlized_ngram:
-		normalizedOutFile.close()
-		with open('{}/features/normalizedNgram.list.txt'.format(N), 'w') as f:
-			json.dump(list(dirList), f)
-
+	# Currently not working, need to fix
+	'''
 	if not tfidf:
 		return
 
@@ -286,6 +318,7 @@ def ngram_features(DIR, N, ngram, noramlized_ngram, tfidf, cutofff=5):
 	tfidfOutFile.close()
 	with open('{}/features/tfidf.list.txt'.format(N), 'w') as f:
 		json.dump(list(dirList), f)
+	'''
 
 stopWords = None
 ##
@@ -297,6 +330,7 @@ feature_func = {
 	"followers"       : followers,
 	"question_length" : question_length,
 	"has_N_answers"   : has_N_answers,
+	"time_to_answer"  : time_to_answer,
 	"topics"          : topics,
 	"ngram"           : None,
 	"norm_ngram"      : None,
@@ -330,7 +364,7 @@ def generateFeatures(features, data=None):
 	# Remove duplicates
 	features = list(set(features))
 
-	ngramNames = {"ngram", "noramlized_ngram", "tfidf"}
+	ngramNames = {"ngram", "tfidf"}
 	ngramFeatures = set(features) & set(["ngram", "norm_ngram", "tfidf"]) 
 	for feat in ngramFeatures: features.pop(features.index(feat))
 
@@ -346,8 +380,8 @@ def generateFeatures(features, data=None):
 		writeThreadMapping(data)
 
 	if ngramFeatures:
-		ngramOpts = {i:i in ngramFeatures for i in ngramNames}
-		ngram_features(data, N, **ngramOpts)
+		ngramOpts = {i: (i in ngramFeatures) for i in ngramNames}
+		ngram_features(data, **ngramOpts)
 
 	# Generate features
 	for feature in features:
