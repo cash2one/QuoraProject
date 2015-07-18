@@ -170,9 +170,9 @@ def time_to_answer(data):
 						dirList.add(lastThread)
 						outFile.write('{} time_to_answer:{}\n'.format(lastThread, d))
 					else:
-						print("Bad thread :(")
-			else:
-				print(lastThread)
+						print("{}: Invalid answer time".format(lastThread))
+			if question_time is None:
+				print("{}: Invalid question time".format(lastThread))
 			lastThread = thread
 			question_time = None
 			answer_times = []
