@@ -345,7 +345,7 @@ def listFeatures(*_):
 	for key, value in feature_func.items():
 		print("\t{} : {}".format(key, value.__doc__))
 
-def generateFeatures(features, data=None):
+def generateFeatures(features, data=None, N=None, M=None):
 	'''Generates feature files.
 
 	Presumes directory structure <data>/features/ already exists.

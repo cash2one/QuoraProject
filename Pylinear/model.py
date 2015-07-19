@@ -4,8 +4,10 @@ import json
 import argparse
 import itertools
 import re
+import time
 
 from Pylinear.feature import generateFeatures
+from Pylinear.scripts.scores import scores
 
 ### HELPER ###
 
@@ -160,10 +162,15 @@ def buildModel(trainFile, options=None):
 	if options is None:
 		options = []
 
-	outFn = '.'.join(trainFile.split('.')[:-1]) + '.model'
+	outputFolder = '/'.join(trainFile.split('/')[:-4]) + '/results/{}/'.format(int(time.time()))
+	os.makedirs(outputFolder)
+	outFn = outputFolder + 'data.model'
 
 	libArgs = [trainEx] + options + [trainFile, outFn]
 	list(execute(libArgs))
+	with open(outputFolder + 'info.txt', 'w') as f:
+		f.write(trainFile.split('/')[-2] + '\n')
+		f.write(' '.join(libArgs) + '\n')
 	return outFn
 
 def predictData(model, testFile=None, options=None):
@@ -179,6 +186,14 @@ def predictData(model, testFile=None, options=None):
 	outFn = '/'.join(model.split('/')[:-1]) + '/predict.out'
 	libArgs = [predictEx] + options + [testFile, model, outFn]
 	printCmd(libArgs)
+	# Write out F score, accuracy, precision, etc
+	with open(testFile) as f:
+		real = [i.split(' ')[0] for i in f.read().strip().split('\n')]
+	with open(outFn) as f:
+		pred = f.read().strip().split('\n')
+	with open('/'.join(model.split('/')[:-1]) + '/stats.txt', 'w') as f:
+		json.dump(scores(real, pred), f)
+
 	return outFn
 
 def getVal(trainFile, devFile, options):

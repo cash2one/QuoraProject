@@ -5,14 +5,21 @@ from Pylinear.feature import generateFeatures, listFeatures
 
 def doAll(args, unknown):
 	'''Combined run of gen, template, build, and predict'''
+
 	if not (args.noGen or args.noTemp or args.noModel):
 		start = time()
 		print("Generating train feature file")
-		generateFeatures([args.train] + args.features, args.trainData)
+		generateFeatures([args.train] + args.features, args.trainData, args.N)
 		print("Generating test feature file")
-		generateFeatures([args.train] + args.features, args.devData)
+		generateFeatures([args.train] + args.features, args.devData, args.N)
 		if args.times:
 			print('Time to gen features: {:.2f}s'.format(time() - start))
+
+	if args.train == 'has_N_answers':
+		args.train = args.train.replace('N', str(args.N))
+	for i, arg in enumerate(args.features):
+		if arg == 'has_N_answers':
+			args.features[i] = arg.replace('N', str(args.N))
 
 	if not (args.noTemp or args.noModel):
 		start = time()
@@ -32,8 +39,6 @@ def doAll(args, unknown):
 		modelFn = buildModel(trainFn, unknown)
 		if args.times:
 			print('Time to train model: {:.2f}s'.format(time() - start))
-	else:
-		modelFn = '{}/results/{},{}/data.model'.format(args.trainData, args.train, ','.join(args.features))
 
 	print("Predicting test data")
 	start = time()
@@ -80,6 +85,7 @@ if __name__ == '__main__':
 	allParser.add_argument('-f', '--features', required=True, nargs='+', help='features to use')
 	allParser.add_argument('-T', '--trainData', default='splits/train', help='dataset to train model')
 	allParser.add_argument('-D', '--devData', default='splits/dev', help='dataset to test')
+	allParser.add_argument('-N', type=int, default=1, help="specify if using has_N_answers feature")
 	allParser.add_argument('--noGen', action='store_true', help="don't regenerate feature files")
 	allParser.add_argument('--noTemp', action='store_true', help="don't regenerate template files")
 	allParser.add_argument('--noModel', action='store_true', help="don't regenerate model file")
@@ -91,6 +97,7 @@ if __name__ == '__main__':
 	gridParser.add_argument('-d', '--devFile', required=True, help="data file to test against")
 	gridParser.add_argument('-o', '--options', required=True, help='file containing list of options in the format "<flag> <val1> <val2>...\\n"')
 
+	# Unknown are additional arguments that may get passed to liblinear
 	args, unknown = parser.parse_known_args()
 
 	{
