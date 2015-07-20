@@ -338,6 +338,7 @@ class QuoraScraper:
 		# Scraper gets block if cookies persist
 		self.driver.delete_all_cookies()
 		self.driver.get(url)
+		self.driver.get(url)
 
 		logging.debug("\tChecking if error page")
 		if self.driver.find_elements_by_id('ErrorMain'):
