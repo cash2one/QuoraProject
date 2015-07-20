@@ -181,7 +181,7 @@ class QuoraScraper:
 		dcap["phantomjs.page.settings.userAgent"] = self.USER_AGENT
 
 		# Phantomjs binary location
-		ex_path = "/home/wpovell/phantomjs-1.9.8-linux-i686/bin/phantomjs"
+		ex_path = "/home/wpovell/phantomjs/bin/phantomjs"
 		if not os.path.isfile(ex_path):
 			ex_path="/usr/local/bin/phantomjs"
 
