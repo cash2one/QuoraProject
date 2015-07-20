@@ -147,11 +147,11 @@ class QuoraScraper:
 		}
 		// Checks if the last element is loaded (used for log pages only)
 		function isLoadedLast() {
-			return getLastElement().children[0].innerHTML.startsWith("Question added by");
+			return getLastElement().children[0].children[0].innerHTML.startsWith("Question added by");
 		}
 		// Gets time from log entry
 		function getTime() {
-			var arr = getLastElement().children[2].textContent.split('•');
+			var arr = getLastElement().children[1].textContent.split('•');
 			return arr[arr.length - 1].trim();q
 		}
 		// Gets revision from log entry
@@ -161,9 +161,9 @@ class QuoraScraper:
 		}
 		// Gets author from log entry
 		function getAuthor() {
-			var e = getLastElement().children[0].children[1];
+			var e = getLastElement().children[0].children[0].children[1];
 			if(e) {
-				return e.attributes['href'].value;
+				return e.attributes['href'].value
 			} else {
 				return undefined;
 			}
@@ -378,7 +378,8 @@ class QuoraScraper:
 		if author:
 			author = author[1:]
 		ret = {
-			"date" : date,
+			"html"   : self.driver.page_source,
+			"date"   : date,
 			"author" : author
 		}
 
