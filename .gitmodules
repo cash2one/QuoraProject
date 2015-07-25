@@ -1,3 +1,6 @@
 [submodule "liblinear"]
 	path = liblinear
 	url = https://github.com/wpovell/liblinear.git
+[submodule "twitter-kov"]
+	path = twitter-kov
+	url = https://github.com/wpovell/twitter-kov.git
