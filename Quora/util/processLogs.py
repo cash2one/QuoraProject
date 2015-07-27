@@ -64,9 +64,8 @@ if __name__ == '__main__':
 		try:
 			processed = parseLogPage(html)
 		except Exception as e:
-			print(e)
 			print(fn)
-			exit(1)
+			raise e
 		for i in processed:
 			actionTypes.add(i['actionType'])
 	print(actionTypes)
