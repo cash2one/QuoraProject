@@ -182,8 +182,8 @@ class QuoraScraper:
 
 		# Phantomjs binary location
 		ex_path = "/home/wpovell/phantomjs/bin/phantomjs"
-		if not os.path.isfile(ex_path):
-			ex_path="/usr/local/bin/phantomjs"
+		if 'PHANTOMJS' in os.environ:
+			ex_path = os.environ['PHANTOMJS']
 
 		# Disable the loading of images
 		self.driver = webdriver.PhantomJS(executable_path=ex_path, service_log_path='/dev/null', service_args=["--ignore-ssl-errors=true", "--load-images=no"], desired_capabilities=dcap)
