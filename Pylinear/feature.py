@@ -249,26 +249,38 @@ def getDocumentVocab(comm, vocab=None):
 		docVocab.add(token)
 	return docVocab
 
-def tokenFeatures(comm, vocab, normalized=False):
-	tokens = tokensFromComm(comm)
-	tokens = Counter([i if i in vocab else "-OOV-" for i in tokens])
-	if normalized:
-		numTokens = sum(tokens.values())
-		tokens = {k:v/numTokens for k, v in tokens.items()}
-	return tokens
+def tokenFeatures(comm, vocab, n):
+	tokens = list(tokensFromComm(comm))
+	if n > 1:
+		tokens = ['-START-'] + tokens + ['-END-'] * (n-1)
+	ret = []
+	for i in range(len(tokens)):
+		toAdd = tokens[i:i+n]
+		for j in range(len(toAdd)):
+			if not toAdd[j] in vocab:
+				toAdd[j]  = '-OOV-'
+		if len(toAdd) == n and not all([j == '-END-' for j in toAdd]):
+			ret.append(tuple(toAdd))
+	return Counter(ret)
 
 
 def ngram_features(DIR, ngram=False, tfidf=False, cutofff=5):
+	'''Generates feature files for n-gram and tfidf features.
+
+	Cutoff controls how many times a token has to occur in the dataset (all threads) to not be marked as an OOV.'''
+
 	docVocabs = []
 
 	# Output files
 	if ngram:
-		ngramOutFile = codecs.open("{}/features/ngram.txt".format(DIR), 'w', 'utf-8')
+		ngramOutFiles = {}
+		for n in ngram:
+			ngramOutFiles[n] = codecs.open("{}/features/{}-gram.txt".format(DIR, n), 'w', 'utf-8')
 	if tfidf:
 		tfidfOutFile = codecs.open("{}/features/tfidf.txt".format(DIR), 'w', 'utf-8')
 
 	print("Getting vocab")
-	vocab = getVocab(DIR)
+	vocab = getVocab(DIR, cutofff)
 
 	print("Getting file features")
 	numDocs = 0
@@ -282,18 +294,19 @@ def ngram_features(DIR, ngram=False, tfidf=False, cutofff=5):
 		comm = commFromData(f.read())
 
 		numDocs += 1
-		if tfidf:
-			docVocabs.append(getDocumentVocab(comm, vocab))
+		#if tfidf:
+		#	docVocabs.append(getDocumentVocab(comm, vocab))
 
-		if ngram:
-			feats = tokenFeatures(comm, vocab)
-			line = "{} ".format(dataDir) + " ".join(["NGRAM_{}:{}".format(k,v) for k, v in feats.items()])
-			ngramOutFile.write(line + "\n")
+		for n in ngram:
+			feats = tokenFeatures(comm, vocab, n)
+			line = "{} ".format(dataDir) + " ".join(["NGRAM_{}:{}".format(','.join(k),v) for k, v in feats.items()])
+			ngramOutFiles[n].write(line + "\n")
 
 	if ngram:
-		ngramOutFile.close()
-		with open('{}/features/ngram.list.txt'.format(DIR), 'w') as f:
-			json.dump(list(dirList), f)
+		for n in ngram:
+			ngramOutFiles[n].close()
+			with open('{}/features/{}-gram.list.txt'.format(DIR, n), 'w') as f:
+				json.dump(list(dirList), f)
 
 	# Currently not working, need to fix
 	'''
@@ -332,9 +345,8 @@ feature_func = {
 	"has_N_answers"   : has_N_answers,
 	"time_to_answer"  : time_to_answer,
 	"topics"          : topics,
-	"ngram"           : None,
-	"norm_ngram"      : None,
-	"tfidf"           : None
+	"n-gram"          : "Generates feature file of n-gram frequencies. Cutoff defaulting to 5 used.",
+	"tfidf"           : "Generates feature file of tf-idf scores."
 }
 
 ### MAIN ###
@@ -343,9 +355,10 @@ def listFeatures(*_):
 	'''Lists features that can be generated.'''
 	print("Feature Options:")
 	for key, value in feature_func.items():
-		print("\t{} : {}".format(key, value.__doc__))
+		value = value if type(value) == unicode else value.__doc__
+		print("\t{: <16} : {}".format(key, value))
 
-def generateFeatures(features, data=None, N=None, M=None):
+def generateFeatures(features, data=None, M=None):
 	'''Generates feature files.
 
 	Presumes directory structure <data>/features/ already exists.
@@ -354,7 +367,6 @@ def generateFeatures(features, data=None, N=None, M=None):
 	## Args can be passed in as argparse instance or as individual params
 	if isinstance(features, argparse.Namespace):
 		data = features.data
-		N = features.N
 		M = features.M
 		features = features.features
 	##
@@ -364,29 +376,36 @@ def generateFeatures(features, data=None, N=None, M=None):
 	# Remove duplicates
 	features = list(set(features))
 
-	ngramNames = {"ngram", "tfidf"}
-	ngramFeatures = set(features) & set(["ngram", "norm_ngram", "tfidf"]) 
-	for feat in ngramFeatures: features.pop(features.index(feat))
-
-	# Check if any of requested features doesn't exist
-	f = [f for f in features if f not in feature_func]
-	if f:
-		print("ERROR: The following feature(s) could not be generated: {}".format(', '.join(f)))
-		exit(1)
-
 	if M:
 		print("Generating file mappings")
 		writeFileMapping(data)
 		writeThreadMapping(data)
 
-	if ngramFeatures:
-		ngramOpts = {i: (i in ngramFeatures) for i in ngramNames}
-		ngram_features(data, **ngramOpts)
-
 	# Generate features
+	ngramFeatures = []
 	for feature in features:
 		print(feature)
-		if feature == 'has_N_answers':
-			feature_func[feature](data, N)
-		else:
+		hasAnswersRe = re.findall(r'has_\d+_answers', feature)
+		if hasAnswersRe:
+			feature_func[feature](data, int(hasAnswersRe[0]))
+		elif feature == 'tfidf' or re.match(r'\d+-gram', feature):
+			ngramFeatures.append(feature)
+		elif feature in features:
 			feature_func[feature](data)
+		else:
+			print('Feature "{}" could not be generated.'.format(feature))
+
+	# All n-gram related features are run together as they share some data
+	if ngramFeatures:
+		args = {}
+		for feature in ngramFeatures:
+			if feature == 'tfidf':
+				args[i] = True
+			# Matches any n-gram feature
+			result = re.findall(r'(\d+)-gram', feature)
+			if result:
+				if not 'ngram' in args:
+					args['ngram'] = []
+				args['ngram'].append(int(result[0]))
+
+		ngram_features(data, **args)
