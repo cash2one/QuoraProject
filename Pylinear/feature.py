@@ -195,12 +195,14 @@ def time_to_answer(data):
 ##
 
 def loadStopWords():
+	'''Loads stop words from file, to be used in replacing tokens with "-STOPWORD-"'''
 	path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "stopwords.txt")
 	with open(path) as f:
 		lines = set(filter(lambda x: not x.startswith("#"), f.read().strip().split('\n')))
 	return lines
 
 def tokensFromComm(comm):
+	'''Yields tokens in the given communication file.'''
 	for section in comm.sectionList:
 		if not section.sentenceList is None:
 			for sentence in section.sentenceList:
@@ -210,6 +212,7 @@ def tokensFromComm(comm):
 					
 
 def getVocab(data, CUTOFF=5):
+	'''Generates vocab for an entire dataset, not including tokens that occur <= CUTOFF.'''
 	global stopWords
 	if stopWords is None:
 		stopWords = loadStopWords()
@@ -235,6 +238,7 @@ def getVocab(data, CUTOFF=5):
 	return vocab
 
 def getDocumentVocab(comm, vocab=None):
+	'''Gets vocab of a single comm file.'''
 	global stopWords
 	if stopWords is None:
 		stopWords = loadStopWords()
@@ -250,6 +254,10 @@ def getDocumentVocab(comm, vocab=None):
 	return docVocab
 
 def tokenFeatures(comm, vocab, n):
+	'''Returns n-grams for a given comm object.
+
+	Replaces tokens not in vocab with OOV and returns tuples of length n.'''
+
 	tokens = list(tokensFromComm(comm))
 	if n > 1:
 		tokens = ['-START-'] + tokens + ['-END-'] * (n-1)
