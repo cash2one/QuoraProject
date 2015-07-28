@@ -211,31 +211,31 @@ def tokensFromComm(comm):
 					yield token
 					
 
-def getVocab(data, CUTOFF=5):
-	'''Generates vocab for an entire dataset, not including tokens that occur <= CUTOFF.'''
+def getVocab(data, cutoffs):
+	'''Generates vocab for an entire dataset, not including tokens that occur < CUTOFF.'''
 	global stopWords
 	if stopWords is None:
 		stopWords = loadStopWords()
 
 	tokenDict = {}
-	vocab = set()
+	vocabs = {c:set() for c in cutoffs}
 
 	for n, f in getDataFiles(data + "/data"):
 		if not n.endswith(".comm"):
 			continue
 		comm = commFromData(f.read())
 		for token in tokensFromComm(comm):
-			if token in vocab:
-				continue
 			if token.lower() in stopWords:
 				token = "-STOPWORD-"
+			# Continue if already in all vocabs
+			if token in vocabs[max(cutoffs)]:
+				continue
 			if not token in tokenDict:
 				tokenDict[token] = 0
 			tokenDict[token] += 1
-			if tokenDict[token] > CUTOFF:
-				tokenDict.pop(token)
-				vocab.add(token)
-	return vocab
+			if tokenDict[token] in cutoffs:
+				vocabs[tokenDict[token]].add(token)
+	return vocabs
 
 def getDocumentVocab(comm, vocab=None):
 	'''Gets vocab of a single comm file.'''
@@ -272,7 +272,7 @@ def tokenFeatures(comm, vocab, n):
 	return Counter(ret)
 
 
-def ngram_features(DIR, ngram=False, tfidf=False, cutofff=5):
+def ngram_features(DIR, ngram):#, tfidf=False):
 	'''Generates feature files for n-gram and tfidf features.
 
 	Cutoff controls how many times a token has to occur in the dataset (all threads) to not be marked as an OOV.'''
@@ -282,13 +282,14 @@ def ngram_features(DIR, ngram=False, tfidf=False, cutofff=5):
 	# Output files
 	if ngram:
 		ngramOutFiles = {}
-		for n in ngram:
-			ngramOutFiles[n] = codecs.open("{}/features/{}-gram.txt".format(DIR, n), 'w', 'utf-8')
-	if tfidf:
-		tfidfOutFile = codecs.open("{}/features/tfidf.txt".format(DIR), 'w', 'utf-8')
+		for n,c in ngram:
+			ngramOutFiles[n,c] = codecs.open("{}/features/{}-gramC{}.txt".format(DIR, n, c), 'w', 'utf-8')
+	#if tfidf:
+	#	tfidfOutFile = codecs.open("{}/features/tfidf.txt".format(DIR), 'w', 'utf-8')
 
 	print("Getting vocab")
-	vocab = getVocab(DIR, cutofff)
+	orders, cutoffs = zip(*ngram)
+	vocabs = getVocab(DIR, cutoffs)
 
 	print("Getting file features")
 	numDocs = 0
@@ -305,15 +306,15 @@ def ngram_features(DIR, ngram=False, tfidf=False, cutofff=5):
 		#if tfidf:
 		#	docVocabs.append(getDocumentVocab(comm, vocab))
 
-		for n in ngram:
-			feats = tokenFeatures(comm, vocab, n)
-			line = "{} ".format(dataDir) + " ".join(["NGRAM_{}:{}".format(','.join(k),v) for k, v in feats.items()])
-			ngramOutFiles[n].write(line + "\n")
+		for n, c in ngram:
+			feats = tokenFeatures(comm, vocabs[c], n)
+			line = "{} ".format(dataDir) + " ".join(["{}-GRAMC{}_{}:{}".format(n, c, ','.join(k),v) for k, v in feats.items()])
+			ngramOutFiles[n,c].write(line + "\n")
 
 	if ngram:
-		for n in ngram:
-			ngramOutFiles[n].close()
-			with open('{}/features/{}-gram.list.txt'.format(DIR, n), 'w') as f:
+		for n, c in ngram:
+			ngramOutFiles[n,c].close()
+			with open("{}/features/{}-gramC{}.list.txt".format(DIR, n, c), 'w') as f:
 				json.dump(list(dirList), f)
 
 	# Currently not working, need to fix
@@ -410,10 +411,13 @@ def generateFeatures(features, data=None, M=None):
 			if feature == 'tfidf':
 				args[i] = True
 			# Matches any n-gram feature
-			result = re.findall(r'(\d+)-gram', feature)
+			result = re.findall(r'(\d+)-gramC?(\d*)', feature)
 			if result:
+				result = list(result[0])
+				if not result[1]:
+					result[1] = 5 # default cutoff
+				result = list(map(int, result))
 				if not 'ngram' in args:
 					args['ngram'] = []
-				args['ngram'].append(int(result[0]))
-
+				args['ngram'].append(result)
 		ngram_features(data, **args)
