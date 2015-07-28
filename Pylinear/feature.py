@@ -393,9 +393,9 @@ def generateFeatures(features, data=None, M=None):
 	ngramFeatures = []
 	for feature in features:
 		print(feature)
-		hasAnswersRe = re.findall(r'has_\d+_answers', feature)
+		hasAnswersRe = re.findall(r'has_(\d+)_answers', feature)
 		if hasAnswersRe:
-			feature_func[feature](data, int(hasAnswersRe[0]))
+			feature_func["has_N_answers"](data, int(hasAnswersRe[0]))
 		elif feature == 'tfidf' or re.match(r'\d+-gram', feature):
 			ngramFeatures.append(feature)
 		elif feature in features:

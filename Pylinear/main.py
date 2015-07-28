@@ -9,17 +9,11 @@ def doAll(args, unknown):
 	if not (args.noGen or args.noTemp or args.noModel):
 		start = time()
 		print("Generating train feature file")
-		generateFeatures([args.train] + args.features, args.trainData, args.N)
+		generateFeatures([args.train] + args.features, args.trainData)
 		print("Generating test feature file")
-		generateFeatures([args.train] + args.features, args.devData, args.N)
+		generateFeatures([args.train] + args.features, args.devData)
 		if args.times:
 			print('Time to gen features: {:.2f}s'.format(time() - start))
-
-	if args.train == 'has_N_answers':
-		args.train = args.train.replace('N', str(args.N))
-	for i, arg in enumerate(args.features):
-		if arg == 'has_N_answers':
-			args.features[i] = arg.replace('N', str(args.N))
 
 	if not (args.noTemp or args.noModel):
 		start = time()

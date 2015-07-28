@@ -12,6 +12,7 @@ from Pylinear.scripts.scores import scores
 ### HELPER ###
 
 def printCmd(command, quiet=False):
+	'''Run command and print its output'''
 	for i in execute(command):
 		if not quiet: print(i)
 
@@ -162,6 +163,7 @@ def buildModel(trainFile, options=None):
 	if options is None:
 		options = []
 
+	# Set output folder to <splits folder>/results/<timestamp>
 	outputFolder = '/'.join(trainFile.split('/')[:-4]) + '/results/{}/'.format(int(time.time()))
 	os.makedirs(outputFolder)
 	outFn = outputFolder + 'data.model'
@@ -197,6 +199,7 @@ def predictData(model, testFile=None, options=None):
 	return outFn
 
 def getVal(trainFile, devFile, options):
+	'''Returns accuracy of predicition with given train file, dev file, and options.'''
 	modelFn = '/'.join(trainFile.split('/')[:-1]) + '/grid.model'
 	buildArgs = [trainEx] + options + [trainFile, modelFn]
 	predictArgs = [predictEx, trainFile, modelFn, '/dev/null']
@@ -205,6 +208,7 @@ def getVal(trainFile, devFile, options):
 	return re.findall(r'([.\d]+)', line)[0], "%" if line.startswith("Accuracy") else " (Mean squared error)"
 
 def gridSearch(args, _):
+	'''Performs gridsearch over passed options'''
 	flags = {}
 	with open(args.options) as f:
 		data = f.read()
