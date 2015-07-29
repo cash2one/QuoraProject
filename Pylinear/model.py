@@ -5,6 +5,7 @@ import argparse
 import itertools
 import re
 import time
+import hashlib
 
 from Pylinear.feature import generateFeatures
 from Pylinear.scripts.scores import scores
@@ -162,9 +163,8 @@ def buildModel(trainFile, options=None):
 
 	if options is None:
 		options = []
-
-	# Set output folder to <splits folder>/results/<timestamp>
-	outputFolder = '/'.join(trainFile.split('/')[:-4]) + '/results/{}/'.format(int(time.time()))
+	# Set output folder to <splits folder>/results/<timestamp>_<hash>
+	outputFolder = '/'.join(trainFile.split('/')[:-4]) + '/results/{}_{}/'.format(int(time.time()*1000000),hashlib.md5(str(options)+trainFile).hexdigest())
 	os.makedirs(outputFolder)
 	outFn = outputFolder + 'data.model'
 
