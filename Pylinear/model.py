@@ -19,6 +19,7 @@ def printCmd(command, quiet=False):
 
 def execute(command):
 	'''Executes a command (blocking) and prints all output'''
+	print(" ".join(command))
 	popen = subprocess.Popen(command, stdout=subprocess.PIPE)
 	lines_iterator = iter(popen.stdout.readline, b"")
 	for line in lines_iterator:
@@ -202,7 +203,7 @@ def getVal(trainFile, devFile, options):
 	'''Returns accuracy of predicition with given train file, dev file, and options.'''
 	modelFn = '/'.join(trainFile.split('/')[:-1]) + '/grid.model'
 	buildArgs = [trainEx] + options + [trainFile, modelFn]
-	predictArgs = [predictEx, trainFile, modelFn, '/dev/null']
+	predictArgs = [predictEx, devFile, modelFn, '/dev/null']
  	list(execute(buildArgs))
 	line = list(execute(predictArgs))[0]
 	return re.findall(r'([.\d]+)', line)[0], "%" if line.startswith("Accuracy") else " (Mean squared error)"
