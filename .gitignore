@@ -1,8 +1,5 @@
-notes.txt
 ghostdriver.log
 data*
-twitterData
-results
 __pycache__
 *.pyc
 *.pdf
