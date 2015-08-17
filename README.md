@@ -1,23 +1,26 @@
-# Quora & CL
+# QuoraProject
 ----
 
 This repo contains my current progress on a project I'm working on related to [Quora](www.quora.com) and predicting various attributes of questions and their answers.
 
 ## Python Files
 
-* `Quora`
-	* `.QuoraScraper`: Core scraping functions to extract data from Quora
-	* `.ScrapeServer`: Server that assigns job urls to clients
-	* `.ScrapeClient`: Script that takes urls passed by server and scrapes them for data
-	* `.exp`: Experiment scripts
-		* `.ans_hist`: Generates histogram of number of answers questions get
-	* `.util`: Utility scripts
-		* `.getText`: Parses out text from data entries (for use with N-gram modeling)
-		* `.reparse`: Reparses entries from stored HTML
-		* `.sortOutput`: Moves output files into sorted directory tree based on month/date
-		* `.stats`: Generates some basic stats about a dataset
+* `Quora`: Scraping & Processing of Quora
+	* `QuoraScraper` : Core scraping functions to extract data from Quora
+	* `ScrapeServer` : Server that assigns job urls to clients
+	* `ScrapeClient` : Script that takes urls passed by server and scrapes them for data
+	* `exp`          : Experiment scripts
+	* `util`         : Utility scripts
+* `Pylinear` : Formatting, training, and predicting features from data
+	* `main`    : Main entry point to cmd line utility
+	* `feature` : All functions for generating feature files
+	* `model`   : All functions for templating, training models, and prediciting
+	* `exp`     : Experiment scripts
+	* `util`    : Utility scripts
+* `Tests`: Unittests for the project
 
-## Running
+
+## Running Quora Scraper
 
 On `localhost`:
 
@@ -50,7 +53,7 @@ INFO:root:Connecting to $HOST on port $PORT
 ...
 ```
 
-## Data format
+## Data format of QuoraScraper output
 
 ```
 {
@@ -78,8 +81,7 @@ INFO:root:Connecting to $HOST on port $PORT
 }
 ```
 
-# FeatureClassification
-Scripts for generating features of a dataset and then performing classification/regression with those features for a given dataset.
+## PyLinear Directory Setup
 
 ```
 / {train, tune, dev, test}
@@ -90,5 +92,7 @@ Scripts for generating features of a dataset and then performing classification/
 		followers.txt
 		... (more feature files)
 	/ results
-		(Output directory for runs)
+		(Output directory for templated features)
+/results
+	(Output directory for predictions)
 ```	
