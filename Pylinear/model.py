@@ -54,20 +54,12 @@ predictEx = "./liblinear/predict"
 
 ### MAIN ###
 
-def combineFeatures(data, train=None, featureNames=None, idFile=None):
+def combineFeatures(data, train, featureNames, idFile):
 	'''Makes train/test file from features
 
 	NOTE: Because this keeps file descriptors open, a maximum of 1024 feature files are allowed.
 	The benefit of this, however, is that the full feature file isn't loaded into memory.
 	'''
-
-	## Args can be passed in as argparse instance or as individual params
-	if isinstance(data, argparse.Namespace):
-		train = data.train
-		featureNames = data.features
-		idFile = data.idFile
-		data = data.data
-	##
 
 	# Create feature data generators (these don't load in the whole file to memory)
 	trainData = getFeatureData(data, train)
@@ -77,10 +69,10 @@ def combineFeatures(data, train=None, featureNames=None, idFile=None):
 	idSet = makeIDSet(data, train, featureNames)
 
 	# Output directory
-	outDir = '{}/results/{},{}'.format(data, train,','.join(featureNames))
+	outDir = os.path.join(data, 'results', '{},{}'.format(train,','.join(featureNames)))
 	if not os.path.isdir(outDir):
 		os.mkdir(outDir)
-	outFn = outDir + '/data.txt'
+	outFn = os.path.join(outDir, 'data.txt')
 	outFile = open(outFn, 'w')
 
 	# Feature name -> ID mapping
@@ -149,18 +141,13 @@ def combineFeatures(data, train=None, featureNames=None, idFile=None):
 	outFile.close()
 
 	# Write out name -> ID mapping
-	with open(outDir + "/map.json", 'w') as f:
+	with open(os.path.join(outDir, "map.json"), 'w') as f:
 		json.dump(featureIDs, f)
 
 	return outFn
 
-def buildModel(trainFile, options=None):
+def buildModel(trainFile, options):
 	'''Builds model trained on given features'''
-
-	## Args can be passed in as argparse instance or as individual params
-	if isinstance(trainFile, argparse.Namespace):
-		trainFile = trainFile.trainFile
-	##
 
 	if options is None:
 		options = []
@@ -176,15 +163,8 @@ def buildModel(trainFile, options=None):
 		f.write(' '.join(libArgs) + '\n')
 	return outFn
 
-def predictData(model, testFile=None, options=None):
+def predictData(model, testFile, options):
 	'''Makes prediction using model on given test data'''
-
-	## Args can be passed in as argparse instance or as individual params
-	if isinstance(model, argparse.Namespace):
-		options = testFile
-		testFile = model.testFile
-		model = model.model
-	##
 
 	outFn = '/'.join(model.split('/')[:-1]) + '/predict.out'
 	libArgs = [predictEx] + options + [testFile, model, outFn]
@@ -198,48 +178,3 @@ def predictData(model, testFile=None, options=None):
 		json.dump(scores(real, pred), f)
 
 	return outFn
-
-def getVal(trainFile, devFile, options):
-	'''Returns accuracy of predicition with given train file, dev file, and options.'''
-	modelFn = '/'.join(trainFile.split('/')[:-1]) + '/grid.model'
-	buildArgs = [trainEx] + options + [trainFile, modelFn]
-	predictArgs = [predictEx, devFile, modelFn, '/dev/null']
- 	list(execute(buildArgs))
-	line = list(execute(predictArgs))[0]
-	return re.findall(r'([.\d]+)', line)[0], "%" if line.startswith("Accuracy") else " (Mean squared error)"
-
-def gridSearch(args, _):
-	'''Performs gridsearch over passed options'''
-	flags = {}
-	with open(args.options) as f:
-		data = f.read()
-		data = data.strip().split('\n')
-		for line in data:
-			line = line.split()
-			flags[line[0]] = line[1:]
-	# Get every combination of options
-	opts = []
-	for combo in itertools.product(*[[(item[0], val) for val in item[1]] for item in flags.items()]):
-		# Combine options into a single list
-		opts.append(list(itertools.chain(*combo)))
-
-	# Get necessary padding
-	pad = len(max([' '.join(i) for i in opts], key=len))
-
-	clss = []
-	reg  = []
-
-	# Try each combo
-	for opt in opts:
-		val, ending = getVal(args.trainFile, args.devFile, opt)
-		if ending == '%':
-			clss.append((float(val), opt))
-		else:
-			reg.append((float(val), opt))
-
-		print('{1: <{0}} : {2: <{0}}'.format(pad, ' '.join(opt), val + ending))
-	if clss:
-		best = max(clss)
-	if reg:
-		best = min(reg)
-	print('Best output with flags "{}" = {}'.format(' '.join(best[1]), best[0]))

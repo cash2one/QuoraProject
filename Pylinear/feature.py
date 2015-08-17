@@ -46,35 +46,13 @@ def commFromData(data):
 	TSerialization.deserialize(comm, data, protocol_factory=TCompactProtocol.TCompactProtocolFactory())
 	return comm
 
-### FILE MAPPING ###
-
-def writeFileMapping(DIR):
-	'''Write line -> file mapping'''
-	with open('{}/fileMapping.txt'.format(DIR), 'w') as outf:
-		for fn in getFiles('{}/data'.format(DIR)):
-			if not fn.endswith(".tar.gz"):
-				continue
-			f = tarfile.open(fn, "r:gz")
-			for tarfn in f.getmembers():
-				outf.write(tarfn.name + '\n')
-
-def writeThreadMapping(DIR):
-	'''Write line -> question thread mapping'''
-	with open('{}/threadMapping.txt'.format(DIR), 'w') as outf:
-		lastFn = ''
-		for fn, _ in getDataFiles(DIR):
-			fn = fn.split('/')[1]
-			if lastFn != fn:
-				lastFn = fn
-				outf.write(fn + "\n")
-
 ### FEATURE GEN ###
 
 def followers(data):
 	'''Generates feature file for number of followers a question has'''
 	dirList = set()
-	outFile = open("{}/features/followers.txt".format(data), 'w')
-	for name, content in getDataFiles(data + "/data"):
+	outFile = open(os.path.join(data, 'features/followers.txt'), 'w')
+	for name, content in getDataFiles(os.path.join(data, "data")):
 		dataDir = name.split('/')[1]
 		dirList.add(dataDir)
 		if not name.endswith("metadata.json"):
@@ -83,34 +61,59 @@ def followers(data):
 		content = json.loads(content)
 		outFile.write("{} followers:{}\n".format(dataDir, content["followers"]))
 	outFile.close()
-	with open('{}/features/followers.list.txt'.format(data), 'w') as f:
+
+	with open(os.path.join(data, 'features/followers.list.txt'), 'w') as f:
 		json.dump(list(dirList), f)
 
-def question_length(data):
-	'''Generates feature file for length of question'''
+def upvotes(data):
+	'''Generates feature file for number of followers a question has'''
 	dirList = set()
-	outFile = open("{}/features/question_length.txt".format(data), 'w')
-	for name, content in getDataFiles(data + "/data"):
+	outFile = open(os.path.join(data, 'features/upvotes.txt'), 'w')
+	for name, content in getDataFiles(os.path.join(data, "data")):
 		dataDir = name.split('/')[1]
 		dirList.add(dataDir)
-		if not name.endswith("question.comm"):
+		if not re.match(r'answer\d+\.json', name):
+			continue
+		content = content.read()
+		content = json.loads(content)
+		outFile.write("{} upvotes:{}\n".format(dataDir, content["upvotes"]))
+	outFile.close()
+
+	with open(os.path.join(data, 'features/upvotes.list.txt'), 'w') as f:
+		json.dump(list(dirList), f)
+
+def length(data, onAnswers):
+	'''Generates feature file for length of question'''
+	if onAnswers:
+		featNane = "answerLen"
+		check = lambda x: bool(re.match(r"answer\d+\.comm", x))
+	else:
+		featName = "questionLen"
+		check = lambda x: x.endswith("question.comm")
+
+	dirList = set()
+	outFile = open(os.path.join(data, "features/{}.txt".format(featName)), 'w')
+	for name, content in getDataFiles(os.path.join(data, "data")):
+		dataDir = name.split('/')[1]
+		dirList.add(dataDir)
+		if not check(name):
 			continue
 		content = content.read()
 		comm = commFromData(content)
-
-		outFile.write("{} question_length:{}\n".format(dataDir, len(comm.text)))
+		outFile.write("{} {}:{}\n".format(dataDir, featName, len(comm.text)))
 	outFile.close()
-	with open('{}/features/question_length.list.txt'.format(data), 'w') as f:
+
+	with open(os.path.join(data,'features/{}.list.txt'.format(featName)), 'w') as f:
 		json.dump(list(dirList), f)
 
-def has_N_answers(data, N):
+def hasAnswers(data, N):
 	'''Generates binary feature file for wheather or not a question has N answers'''
 	lastThread = ""
 	numAnswers = 0
 	first = True
 	dirList = set()
-	outFile = open("{}/features/has_{}_answers.txt".format(data, N), "w")
-	for n, f in getDataFiles(data + "/data"):
+	outFile = open("{}/features/has{}answers.txt".format(data, N), "w")
+	for n, f in getDataFiles(os.path.join(data, "data")):
 		split = n.split("/")
 		thread = split[1]
 		fn = split[2]
@@ -119,21 +122,22 @@ def has_N_answers(data, N):
 			lastThread = thread
 		elif thread != lastThread:
 			dirList.add(lastThread)
-			outFile.write("{} has_{}_answers:{}\n".format(lastThread, N, 1 if numAnswers >= N else 0))
+			outFile.write("{} has{}answers:{}\n".format(lastThread, N, 1 if numAnswers >= N else 0))
 			lastThread = thread
 			numAnswers = 0
 		if re.match('answer[\d]+.comm', fn):
 			numAnswers += 1
-	outFile.write("{} has_{}_answers:{}\n".format(lastThread, N, 1 if numAnswers >= N else 0))
+	outFile.write("{} has{}answers:{}\n".format(lastThread, N, 1 if numAnswers >= N else 0))
 	outFile.close()
-	with open('{}/features/has_{}_answers.list.txt'.format(data, N), 'w') as f:
+	with open(os.path.join(data, 'features/has{}answers.list.txt'.format(N)), 'w') as f:
 		json.dump(list(dirList), f)
 
-def topics(data):
+def topics(data, onAnswers):
 	'''Generates feature file with binary feature for each topic.'''
+
 	dirList = set()
-	outFile = codecs.open("{}/features/topics.txt".format(data), 'w', 'utf-8')
-	for name, content in getDataFiles(data + "/data"):
+	outFile = codecs.open(os.path.join(data, "features/questionTopics.txt"), 'w', 'utf-8')
+	for name, content in getDataFiles(os.path.join(data, "data")):
 		if not name.endswith("metadata.json"):
 			continue
 		dataDir = name.split('/')[1]
@@ -145,18 +149,19 @@ def topics(data):
 			outFile.write("{}:1 ".format(topic[1:]))
 		outFile.write("\n")
 	outFile.close()
-	with open('{}/features/topics.list.txt'.format(data), 'w') as f:
+
+	with open(os.path.join(data, 'features/questionTopics.list.txt'), 'w') as f:
 		json.dump(list(dirList), f)
 
-def time_to_answer(data):
+def answerTime(data):
 	'''Generates feature of the number of days it took for a question to be answered'''
 	lastThread = ""
 	answer_times = []
 	question_time = None
 	first = True
 	dirList = set()
-	outFile = open('{}/features/time_to_answer.txt'.format(data), 'w')
-	for n, f in getDataFiles(data + "/data"):
+	outFile = open(os.path.join(data, 'features/answerTime.txt'), 'w')
+	for n, f in getDataFiles(os.path.join(data + "data")):
 		split = n.split("/")
 		thread = split[1]
 		fn = split[2]
@@ -168,7 +173,7 @@ def time_to_answer(data):
 					d = int(datetime.timedelta(seconds=(answer_time - question_time)).total_seconds() / 60 / 60)
 					if d >= 0:
 						dirList.add(lastThread)
-						outFile.write('{} time_to_answer:{}\n'.format(lastThread, d))
+						outFile.write('{} answerTime:{}\n'.format(lastThread, d))
 					else:
 						print("{}: Invalid answer time".format(lastThread))
 			if question_time is None:
@@ -187,7 +192,7 @@ def time_to_answer(data):
 			url = questionData['url']
 
 	outFile.close()
-	with open('{}/features/time_to_answer.list.txt'.format(data), 'w') as f:
+	with open(os.path.join(data,'features/answerTime.list.txt'), 'w') as f:
 		json.dump(list(dirList),f)
 
 ##
@@ -201,7 +206,7 @@ def loadStopWords():
 		lines = set(filter(lambda x: not x.startswith("#"), f.read().strip().split('\n')))
 	return lines
 
-def tokensFromComm(comm):
+def tokensFromComm(comm, POS):
 	'''Yields tokens in the given communication file.'''
 	for section in comm.sectionList:
 		if not section.sentenceList is None:
@@ -272,20 +277,16 @@ def tokenFeatures(comm, vocab, n):
 	return Counter(ret)
 
 
-def ngram_features(DIR, ngram):#, tfidf=False):
+def ngram_features(data, order, cutoff, tfidf, binary, POS):
 	'''Generates feature files for n-gram and tfidf features.
 
 	Cutoff controls how many times a token has to occur in the dataset (all threads) to not be marked as an OOV.'''
 
 	docVocabs = []
 
-	# Output files
-	if ngram:
-		ngramOutFiles = {}
-		for n,c in ngram:
-			ngramOutFiles[n,c] = codecs.open("{}/features/{}-gramC{}.txt".format(DIR, n, c), 'w', 'utf-8')
-	#if tfidf:
-	#	tfidfOutFile = codecs.open("{}/features/tfidf.txt".format(DIR), 'w', 'utf-8')
+	featName = '{}-gramC{}T{}B{}P{}'.format(order, cutoff, int(tfidf), int(binary), int(POS))
+
+	outFile = codecs.open(os.path.join(data, 'features/{}.txt'.format(featName)))
 
 	print("Getting vocab")
 	orders, cutoffs = zip(*ngram)
@@ -346,26 +347,6 @@ stopWords = None
 ##
 ## End NGRAM features
 ##
-
-# Dictionary of feature names and func that generate them
-feature_func = {
-	"followers"       : followers,
-	"question_length" : question_length,
-	"has_N_answers"   : has_N_answers,
-	"time_to_answer"  : time_to_answer,
-	"topics"          : topics,
-	"n-gram"          : "Generates feature file of n-gram frequencies. Cutoff defaulting to 5 used.",
-	"tfidf"           : "Generates feature file of tf-idf scores."
-}
-
-### MAIN ###
-
-def listFeatures(*_):
-	'''Lists features that can be generated.'''
-	print("Feature Options:")
-	for key, value in feature_func.items():
-		value = value if type(value) == unicode else value.__doc__
-		print("\t{: <16} : {}".format(key, value))
 
 def generateFeatures(features, data=None, M=None):
 	'''Generates feature files.
