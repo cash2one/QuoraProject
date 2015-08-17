@@ -8,7 +8,7 @@ import time
 import hashlib
 
 from Pylinear.feature import generateFeatures
-from Pylinear.scripts.scores import scores
+from Pylinear.util.scores import scores
 
 ### HELPER ###
 

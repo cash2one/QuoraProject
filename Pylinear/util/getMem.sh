@@ -1,3 +1,5 @@
+# Continously reports memory usage of currently running job
+
 JOB_ID=$1
 echo $JOB_ID
 qstat -j $JOB_ID > /dev/null
