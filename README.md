@@ -49,3 +49,31 @@ $ tail -r /export/a04/wpovell/logs/ScrapeClient.o$ID
 INFO:root:Connecting to $HOST on port $PORT
 ...
 ```
+
+## Data format
+
+```
+{
+	"data" : {
+		"answers" : [
+			{
+				"author",
+				"text",
+				"upvotes",
+			}
+		],
+		"question",
+		"details",
+		"followers",
+		"topics" : [ ],
+		"links" : [ ]
+	}
+	"html",
+	"log" : {
+		"author",
+		"date"
+	}
+	"time"
+	"url"
+}
+```
