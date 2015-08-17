@@ -1,3 +1,6 @@
+'''Generates a probability graph of having a certain number of answers.
+Graphed for both not given and given that the question has details.'''
+
 from __future__ import division
 from Pylinear.feature import getDataFiles, commFromData
 import re
@@ -66,7 +69,4 @@ if __name__ == '__main__':
 		x2.append(k)
 		y2.append(v)
 
-	print(x)
-	print(y)
-	print(numThreads)
-	#graph(x1,y1,t1,x2,y2,t2)
+	graph(x1,y1,t1,x2,y2,t2)

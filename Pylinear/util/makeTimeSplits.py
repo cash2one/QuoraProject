@@ -1,3 +1,6 @@
+'''Moves data into chronological splits in order
+train -> dev -> tune -> test'''
+
 from __future__ import division
 from Pylinear.feature import getDataFiles
 import json

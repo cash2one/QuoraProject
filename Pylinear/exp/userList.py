@@ -1,4 +1,4 @@
-'''Generate follower histograms for users.'''
+'''Generates data about number of followers question authors get.'''
 import json
 from Pylinear.feature import getDataFiles
 

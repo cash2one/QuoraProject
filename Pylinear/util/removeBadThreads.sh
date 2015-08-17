@@ -1,5 +1,5 @@
 #!/bin/bash
-
+# Used to remove certain threads (found to be corrupted in some way) from various tar.gz'd archives
 threads="709f97e52894d9843f5b6523b8bc481f
 9aaa149fbfbd1aae1e0c2d0352c54316
 93b6185d1bae094601a92484882ee227

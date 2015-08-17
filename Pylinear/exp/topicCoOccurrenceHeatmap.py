@@ -1,3 +1,5 @@
+'''Generates heatmap of cooccurence of various tagged topics in dataset.'''
+
 from __future__ import division
 
 import json

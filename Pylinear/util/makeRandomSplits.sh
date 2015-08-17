@@ -5,6 +5,9 @@
 #$ -S /bin/bash
 #$ -j y -o /export/a04/wpovell/logs
 
+# Used to move data from 'annotated_data' to proper splits
+# Splits are randomized (not chronological)
+
 copyDir() {
     mkdir -p /export/a04/wpovell/splits/$1/data/
     cp -ar /export/a04/wpovell/annotated_data/$2/ /export/a04/wpovell/splits/$1/data/$2

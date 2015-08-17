@@ -1,3 +1,4 @@
+'''Generates accuracy, precision, recall, and F1 values for a given liblinear prediction run.'''
 from __future__ import division
 
 def FMeasure(pres, recall, beta=1):

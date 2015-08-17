@@ -1,3 +1,4 @@
+'''Copies metadata from compressed to annotated files so reannotation isn't needed to update.'''
 from Pylinear.feature import getFiles
 import tarfile
 import itertools

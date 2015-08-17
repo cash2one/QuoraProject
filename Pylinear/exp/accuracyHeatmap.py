@@ -1,3 +1,7 @@
+'''Generates accuracy heatmap from qsub output
+Gridding over cost and classifier
+For predicting has_2_answers using question length, topics, and unigrams'''
+
 import re
 from termcolor import colored
 
