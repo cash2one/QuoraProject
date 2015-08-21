@@ -72,7 +72,7 @@ def upvotes(data):
 	for name, content in getDataFiles(os.path.join(data, "data")):
 		dataDir = name.split('/')[1]
 		dirList.add(dataDir)
-		if not re.match(r'answer\d+\.json', name):
+		if not re.findall(r'answer\d+\.json', name):
 			continue
 		content = content.read()
 		content = json.loads(content)
@@ -86,7 +86,7 @@ def length(data, onAnswers):
 	'''Generates feature file for length of question'''
 	if onAnswers:
 		featName = "answerLen"
-		check = lambda x: bool(re.match(r"answer\d+\.comm", x))
+		check = lambda x: bool(re.findall(r"answer\d+\.comm", x))
 	else:
 		featName = "questionLen"
 		check = lambda x: x.endswith("question.comm")
@@ -125,7 +125,7 @@ def hasAnswers(data, N):
 			outFile.write("{} has{}answers:{}\n".format(lastThread, N, 1 if numAnswers >= N else 0))
 			lastThread = thread
 			numAnswers = 0
-		if re.match('answer[\d]+.comm', fn):
+		if re.findall(r'answer[\d]+\.comm', fn):
 			numAnswers += 1
 	outFile.write("{} has{}answers:{}\n".format(lastThread, N, 1 if numAnswers >= N else 0))
 	outFile.close()
@@ -181,7 +181,7 @@ def answerTime(data):
 			lastThread = thread
 			question_time = None
 			answer_times = []
-		if re.match('answer[\d]+.json', fn):
+		if re.findall(r'answer[\d]+\.json', fn):
 			answerData = json.load(f)
 			t = answerData['time']
 			if not t is None:
@@ -291,7 +291,7 @@ def ngram(data, order, cutoff, binary, POS, onAnswers):
 	featName = '{}-gramC{}B{}P{}A{}'.format(order, cutoff, int(binary), int(POS), int(onAnswers))
 	outFile = codecs.open(os.path.join(data, 'features/{}.txt'.format(featName)), 'w', 'utf-8')
 	if onAnswers:
-		check = lambda x: bool(re.match(r'answer\d+\.comm', x))
+		check = lambda x: bool(re.findall(r'answer\d+\.comm', x))
 	else:
 		check = lambda x: x.endswith("question.comm")
 
@@ -326,7 +326,7 @@ def ngram(data, order, cutoff, binary, POS, onAnswers):
 
 def tfidf(data, cutoff, POS, onAnswers):
 	if onAnswers:
-		check = lambda x: bool(re.match(r'answer\d+\.comm', x))
+		check = lambda x: bool(re.findall(r'answer\d+\.comm', x))
 	else:
 		check = lambda x: x.endswith("question.comm")
 
