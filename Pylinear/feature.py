@@ -85,7 +85,7 @@ def upvotes(data):
 def length(data, onAnswers):
 	'''Generates feature file for length of question'''
 	if onAnswers:
-		featNane = "answerLen"
+		featName = "answerLen"
 		check = lambda x: bool(re.match(r"answer\d+\.comm", x))
 	else:
 		featName = "questionLen"
