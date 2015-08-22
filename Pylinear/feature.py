@@ -115,8 +115,8 @@ def hasAnswers(data, N):
 	outFile = open("{}/features/has{}answers.txt".format(data, N), "w")
 	for n, f in getDataFiles(os.path.join(data, "data")):
 		split = n.split("/")
-		thread = split[1]
-		fn = split[2]
+		thread = split[0]
+		fn = split[1]
 		if first:
 			first = False
 			lastThread = thread
@@ -162,8 +162,8 @@ def aboveMeanUpvotes(data):
 	outFile = open(os.path.join(data, 'features/aboveMeanUpvotes.txt'), 'w')
 	for n, f in getDataFiles(os.path.join(data, "data")):
 		split = n.split("/")
-		thread = split[1]
-		fn = split[2]
+		thread = split[0]
+		fn = split[1]
 		if thread != lastThread:
 			if first:
 				first = False
@@ -192,8 +192,8 @@ def answerTime(data):
 	outFile = open(os.path.join(data, 'features/answerTime.txt'), 'w')
 	for n, f in getDataFiles(os.path.join(data + "data")):
 		split = n.split("/")
-		thread = split[1]
-		fn = split[2]
+		thread = split[0]
+		fn = split[1]
 		if thread != lastThread:
 			if first:
 				first = False

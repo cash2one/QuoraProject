@@ -11,8 +11,8 @@ def getData():
 	first = True
 	for fn, f in getDataFiles(os.path.join(Pylinear.BASE_PATH,'splits/train/data')):
 		split = fn.split("/")
-		thread = split[1]
-		fn = split[2]
+		thread = split[0]
+		fn = split[1]
 		if thread != lastThread:
 			if first:
 				first = False
