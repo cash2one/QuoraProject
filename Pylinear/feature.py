@@ -153,6 +153,35 @@ def topics(data, onAnswers):
 	with open(os.path.join(data, 'features/questionTopics.list.txt'), 'w') as f:
 		json.dump(list(dirList), f)
 
+def aboveMeanUpvotes(data):
+	'''Generates feature of the number of days it took for a question to be answered'''
+	lastThread = ""
+	answerVals = []
+	first = True
+	dirList = set()
+	outFile = open(os.path.join(data, 'features/aboveMeanUpvotes.txt'), 'w')
+	for n, f in getDataFiles(os.path.join(data, "data")):
+		split = n.split("/")
+		thread = split[1]
+		fn = split[2]
+		if thread != lastThread:
+			if first:
+				first = False
+			elif answerVals:
+				mean = sum(answerVals)/len(answerVals)
+				dirList.add(lastThread)
+				for i in answerVals:
+					outFile.write('{} aboveMeanUpvotes:{}\n'.format(lastThread, 1 if i > mean else 0))
+			lastThread = thread
+			answerVals = []
+		if re.findall(r'answer[\d]+\.json', fn):
+			answerData = json.load(f)
+			answerVals.append(answerData['upvotes'])
+
+	outFile.close()
+	with open(os.path.join(data,'features/aboveMeanUpvotes.list.txt'), 'w') as f:
+		json.dump(list(dirList),f)	
+
 def answerTime(data):
 	'''Generates feature of the number of days it took for a question to be answered'''
 	lastThread = ""

@@ -60,6 +60,10 @@ if __name__ == '__main__':
 	answerTimeP = genSub.add_parser("answerTime", help=about, description=about)
 	answerTimeP.add_argument('-s', '--split', required=True, help='split to generate features for')
 
+	about = "Does an answer have more than the average number of upvotes?"
+	aboveMeanUpvotesP = genSub.add_parser("aboveMeanUpvotes", help=about, description=about)
+	aboveMeanUpvotesP.add_argument('-s', '--split', required=True, help='split to generate features for')
+
 	##########################
 
 	about = "Combine feature templates"
@@ -95,7 +99,7 @@ if __name__ == '__main__':
 		elif feat == "length":
 			fg.length(path, args.answer)
 		elif feat == "topics":
-			fg.topics(data)
+			fg.topics(path)
 		elif feat == "followers":
 			fg.followers(path)
 		elif feat == "upvotes":
@@ -106,6 +110,8 @@ if __name__ == '__main__':
 			fg.answerTime(path)
 		elif feat == "tfidf":
 			fg.tfidf(path, args.cutoff, args.POS, args.answer)
+		elif feat == "aboveMeanUpvotes":
+			fg.aboveMeanUpvotes(path)
 
 	elif cmd == "template":
 		combineFeatures(args.split, args.train, args.features, args.idFile)
