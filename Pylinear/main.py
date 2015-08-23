@@ -114,7 +114,8 @@ if __name__ == '__main__':
 			fg.aboveMeanUpvotes(path)
 
 	elif cmd == "template":
-		combineFeatures(args.split, args.train, args.features, args.idFile)
+		path = os.path.join(BASE_PATH, "splits", args.split)
+		combineFeatures(path, args.train, args.features, args.idFile)
 
 	elif cmd == "build":
 		buildModel(args.trainFile, unknown)
