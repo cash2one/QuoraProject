@@ -1,3 +1,4 @@
+from __future__ import division
 import os
 import re
 import json
@@ -17,9 +18,8 @@ def getData():
 			if first:
 				first = False
 			elif not question_time is None:
-				for ans in answer_times:
-					points.append((ans[0] - question_time, ans[1]))
-
+				for upvotes, timeDiff in answer_times:
+					points.append((timeDiff - question_time, upvotes))
 			lastThread = thread
 			question_time = None
 			answer_times = []
@@ -28,7 +28,7 @@ def getData():
 			t = answerData['time']
 			ups = answerData['upvotes']
 			if not t is None:
-				answer_times.append((answerData['time'], ups))
+				answer_times.append((ups, answerData['time']))
 		if fn.endswith('metadata.json'):
 			questionData = json.load(f)
 			question_time = questionData['postTime']
@@ -38,14 +38,18 @@ def getData():
 def plot(data):
 	import matplotlib.pyplot as plt
 	timeDiff, ups = zip(*data)
+	timeDiff = list(map(lambda x: x / 60 / 60 / 24 , timeDiff))
 	plt.scatter(ups, timeDiff)
+	plt.title("Answer Upvotes vs Time Since Question Post ")
 	plt.xlabel("Upvotes")
-	plt.ylabel("Time")
+	plt.ylabel("Time (Days)")
 	plt.show()
 
 if __name__ == '__main__':
-	data = getData()
 	if Pylinear.ON_GRID:
+		data = getData()
 		print(json.dumps(data))
 	else:
+		with open('uVt.dat') as f:
+			data = json.load(f)
 		plot(data)
