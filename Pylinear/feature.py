@@ -53,7 +53,7 @@ def followers(data):
 	dirList = set()
 	outFile = open(os.path.join(data, 'features/followers.txt'), 'w')
 	for name, content in getDataFiles(os.path.join(data, "data")):
-		dataDir = name.split('/')[1]
+		dataDir = name.split('/')[0]
 		dirList.add(dataDir)
 		if not name.endswith("metadata.json"):
 			continue
@@ -70,7 +70,7 @@ def upvotes(data):
 	dirList = set()
 	outFile = open(os.path.join(data, 'features/upvotes.txt'), 'w')
 	for name, content in getDataFiles(os.path.join(data, "data")):
-		dataDir = name.split('/')[1]
+		dataDir = name.split('/')[0]
 		dirList.add(dataDir)
 		if not re.findall(r'answer\d+\.json', name):
 			continue
@@ -94,7 +94,7 @@ def length(data, onAnswers):
 	dirList = set()
 	outFile = open(os.path.join(data, "features/{}.txt".format(featName)), 'w')
 	for name, content in getDataFiles(os.path.join(data, "data")):
-		dataDir = name.split('/')[1]
+		dataDir = name.split('/')[0]
 		dirList.add(dataDir)
 		if not check(name):
 			continue
@@ -140,7 +140,7 @@ def topics(data, onAnswers):
 	for name, content in getDataFiles(os.path.join(data, "data")):
 		if not name.endswith("metadata.json"):
 			continue
-		dataDir = name.split('/')[1]
+		dataDir = name.split('/')[0]
 		dirList.add(dataDir)
 		content = content.read()
 		content = json.loads(content)
@@ -335,7 +335,7 @@ def ngram(data, order, cutoff, binary, POS, onAnswers):
 		if not check(name):
 			continue
 
-		dataDir = name.split('/')[1]
+		dataDir = name.split('/')[0]
 		dirList.add(dataDir)
 
 		comm = commFromData(f.read())
@@ -372,7 +372,7 @@ def tfidf(data, cutoff, POS, onAnswers):
 	for name, f in getDataFiles(os.path.join(data, "data")):
 		if not check(name):
 			continue
-		dataDir = name.split('/')[1]
+		dataDir = name.split('/')[0]
 		dirList.add(dataDir)
 
 		comm = commFromData(f.read())
