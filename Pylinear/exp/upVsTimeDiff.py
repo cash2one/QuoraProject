@@ -37,11 +37,15 @@ def getData():
 
 def plot(data):
 	import matplotlib.pyplot as plt
+	oldData = data
+	data = [(t,u) for t,u in data if u != 0]
+	print(len(oldData) - len(data))
 	timeDiff, ups = zip(*data)
 	timeDiff = list(map(lambda x: x / 60 / 60 / 24 , timeDiff))
 	plt.scatter(ups, timeDiff)
 	plt.title("Answer Upvotes vs Time Since Question Post ")
 	plt.xlabel("Upvotes")
+	plt.xscale('log')
 	plt.ylabel("Time (Days)")
 	plt.show()
 
