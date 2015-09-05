@@ -51,10 +51,10 @@ def makeSplits(inp, out, train=70, dev=10, tune=10, test=10):
 	tuneThreads = threads[p2:p3]
 	testThreads = threads[p3:]
 
-	trainF = tarfile.open('{}/train/data.tar.gz'.format(out), 'w:gz')
-	devF   = tarfile.open('{}/dev/data.tar.gz'.format(out), 'w:gz')
-	tuneF  = tarfile.open('{}/tune/data.tar.gz'.format(out), 'w:gz')
-	testF  = tarfile.open('{}/test/data.tar.gz'.format(out), 'w:gz')
+	trainF = tarfile.open(os.path.join(out, 'train/data/data.tar.gz'), 'w:gz')
+	devF   = tarfile.open(os.path.join(out, 'dev/data/data.tar.gz'), 'w:gz')
+	tuneF  = tarfile.open(os.path.join(out, 'tune/data/data.tar.gz'), 'w:gz')
+	testF  = tarfile.open(os.path.join(out, 'test/data/data.tar.gz'), 'w:gz')
 	for n, f in getDataFiles(inp):
 		split = n.split("/")
 		thread = split[1]
@@ -86,4 +86,4 @@ def makeSplits(inp, out, train=70, dev=10, tune=10, test=10):
 
 
 if __name__ == '__main__':
-	makeSplits('splits/train/data', 'out') #'/export/a04/wpovell/annotated_data', '/export/a04/wpovell/splits')
+	makeSplits(os.path.join(BASE_PATH, 'annotated_data'), os.path.join(BASE_PATH, 'splits'))
