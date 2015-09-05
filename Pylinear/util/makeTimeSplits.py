@@ -6,6 +6,7 @@ from Pylinear.feature import getDataFiles
 import json
 import tarfile
 from StringIO import StringIO
+import os
 
 def generateFileTimestamps(data):
 	lastThread = ""
