@@ -2,6 +2,7 @@
 train -> dev -> tune -> test'''
 
 from __future__ import division
+import Pylinear
 from Pylinear.feature import getDataFiles
 import json
 import tarfile
@@ -87,4 +88,4 @@ def makeSplits(inp, out, train=70, dev=10, tune=10, test=10):
 
 
 if __name__ == '__main__':
-	makeSplits(os.path.join(BASE_PATH, 'annotated_data'), os.path.join(BASE_PATH, 'splits'))
+	makeSplits(os.path.join(Pylinear.BASE_PATH, 'annotated_data'), os.path.join(Pylinear.BASE_PATH, 'splits'))
