@@ -430,8 +430,20 @@ class QuoraScraper:
 				delta += 7
 			date = (t - timedelta(days=delta)).replace(hour=0, minute=0, second=0, microsecond=0)
 		else:
-			logging.error("BAD DATE: {}".format(s))
-			return None
+			s = s.replace('Written ', '').replace("Updated ", '')
+			date = None
+			try:
+				date = datetime.strptime(s, '%b %d, %Y')
+			except ValueError:
+				try:
+					date = datetime.strptime(s, '%b %d')
+					date.replace(year=2016)
+				except ValueError:
+					pass
+			if date is None:
+				logging.error("BAD DATE: {}".format(s))
+				return None
+
 		date = int((date - datetime(1970,1,1)).total_seconds())
 		return date
 
@@ -471,7 +483,7 @@ class QuoraScraper:
 			# TYPE-1 ANSWER
 			# Seen on http://www.quora.com/Would-human-blood-be-a-healthy-drink-for-humans
 			answer = answer.cssselect('.ExpandedAnswer')[0]
-			text = answer.cssselect('div > div > div')
+			text = answer.cssselect('.rendered_qtext')[0]
 			if text:
 				answer_text = dehtml(tostring(text[0]))
 			# TYPE-2 ANSWER
@@ -511,11 +523,11 @@ class QuoraScraper:
 		details = dehtml(tostring(parsed('.question_details > div')[0]))
 
 		# Followers
-		followers = parsed('.follow_button .no_count') + parsed('.follow_button .count')
-		if followers:
-			followers = cl.numToInt(followers[0].text_content())
-		else:
-			followers = 0
+		#followers = parsed('.follow_button .no_count') + parsed('.follow_button .count')
+		#if followers:
+		#	followers = cl.numToInt(followers[0].text_content())
+		#else:
+		#	followers = 0
 
 		# Topics
 		tops = parsed('.BreadCrumb a') + parsed('.QuestionTopicListItem a')
@@ -524,7 +536,9 @@ class QuoraScraper:
 			logging.warn("No topics for question")
 		else:
 			for t in tops:
-				topics.append(t.attrib['href'])
+				topic = t.attrib['href']
+				if t != '#':
+					topics.append(t.attrib['href'])
 
 		# Other links
 		link_elements = parsed('.logged_out_related_questions_container a') + parsed('.SidebarTopicBestQuestions a') + parsed('.RelatedQuestions a')
@@ -539,9 +553,11 @@ class QuoraScraper:
 		answers = parsed('.Answer:not(.ActionBar)')
 		c = 0
 		for a in answers:
-			upvotes = cl.numToInt(a.cssselect('a.vote_item_link > span')[0].text_content())
+			#upvotes = cl.numToInt(a.cssselect('a.vote_item_link > span')[0].text_content())
+			txt = tostring(a.cssselect('.CredibilityFact')[0])
+			commentViews = cl.numToInt(re.findall(r'([0-9.a-z]+) Views', dehtml(txt))[0])
 
-			author_info = a.cssselect('div.author_info > a')
+			author_info = a.cssselect('.AnswerHeader a.user')
 			if author_info:
 				author_info = author_info[0].get('href')[1:]
 			else:
@@ -557,7 +573,8 @@ class QuoraScraper:
 			answer_info.append({
 				'author'    : author_info,
 				'text'      : answer_text,
-				'upvotes'   : upvotes,
+				#'upvotes'   : upvotes,
+				'commentViews' : commentViews,
 				'time'      : date,
 			})
 
@@ -566,7 +583,7 @@ class QuoraScraper:
 			'topics'    : topics,
 			'links'     : links,
 			'details'   : details,
-			'followers' : followers,
+		#	'followers' : followers,
 			'answers'   : answer_info
 		}
 
