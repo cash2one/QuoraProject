@@ -5,7 +5,7 @@ For predicting has_2_answers using question length, topics, and unigrams'''
 import re
 from termcolor import colored
 
-def colorPrint(d, out=True):
+def colorPrint(d,mn,mx, out=True):
 	s = '  | '
 	s += ' | '.join(['{}'.format(i).ljust(7) for i in sorted(d[0.0].keys())])
 	s += ' |\n'
@@ -28,7 +28,7 @@ def colorPrint(d, out=True):
 
 	return arr
 
-def plot(d, arr):
+def plot(d, arr, n):
 	import matplotlib
 	import matplotlib.pyplot as plt
 	import numpy as np
@@ -46,7 +46,7 @@ def plot(d, arr):
 
 	ax.set_xlabel('Cost Parameter (10^x)')
 	ax.set_ylabel('Classifier ID')
-	plt.title('Accuracy of Predicting "has_2_answers"\nUsing Question Length, Topics, and Unigrams')
+	plt.title('Accuracy of Predicting "has_2_answers"\nUsing Question Length, Topics, and {}'.format(n))
 	ax.set_xticks(np.arange(arr.shape[1]), minor=False)
 	ax.set_yticks(np.arange(arr.shape[0]), minor=False)
 	ax.set_xticklabels([int(math.log10(i)) for i in sorted(d[0].keys())], minor=False)
@@ -74,5 +74,5 @@ if __name__ == '__main__':
 			d[s] = {}
 		d[s][c] = a
 
-	arr = colorPrint(d)
+	arr = colorPrint(d, mn, mx)
 	plot(d, arr)
