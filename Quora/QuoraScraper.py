@@ -8,7 +8,7 @@ from pyquery import PyQuery as pq
 import datetime as dt
 from datetime import datetime, timedelta
 
-if VERSION == 3:
+if VERSION >= 3:
 	from urllib.parse import quote
 else:
 	from urllib import quote
@@ -37,6 +37,7 @@ from htmlentitydefs import name2codepoint
 import re
 
 class _HTMLToText(HTMLParser):
+	'''Extension of HTMLParser to isolate text from HTML.'''
 	def __init__(self):
 		HTMLParser.__init__(self)
 		self._buf = []
