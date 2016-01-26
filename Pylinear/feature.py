@@ -1,3 +1,4 @@
+'''This module contains classes for generating features from tar.gz'd data in splits/'''
 from __future__ import unicode_literals, division
 import json
 import tarfile
@@ -208,6 +209,132 @@ class TopicGen(FeatureGenerator):
 
 		self.writeFeature(features)			
 
+##
+## NGRAM FEATURES
+##
+
+class NGramGen(FeatureGenerator, object):
+	'''Feature for N-grams in question or answers.'''
+	def __init__(self, data, order, cutoff, binary, POS, onAnswers):
+		'''
+		Args:
+			data      (str): Dataset to generate for.
+			order     (int): N-gram order to generate (e.g. unigram, bigram, etc.).
+			cutoff    (int): Minimum times a token must appear to not be replaced with "-OOV-".
+			binary    (bool): If True, feature values will be binary (1/0) rather than frequencies.
+			POS       (bool): If True, N-grams will be from part-of-speech tags rather than text tokens.
+			onAnswers (bool): If True, features will be generated for answer text, rather than question text.
+		'''
+		self.order = order
+		self.cutoff = cutoff
+		self.binary = binary
+		self.POS = POS
+
+		if onAnswers:
+			self.regex = r"answer\d\.comm"
+		else:
+			self.regex = r"question\.comm"
+
+
+		self.FEATURE_NAME = '{}-gram_cut{}'.format(order, cutoff)
+		if binary:
+			self.FEATURE_NAME += "_bin"
+		if POS:
+			self.FEATURE_NAME += "_pos"
+
+		if onAnswers:
+			self.FEATURE_NAME = "answer_" + self.FEATURE_NAME
+		else:
+			self.FEATURE_NAME = "question_" + self.FEATURE_NAME
+
+		self.stopWords = self.readStopWords()
+		super(NGramGen, self).__init__(data)
+
+	@staticmethod
+	def readStopWords():
+		'''Loads stop words from file, to be used in replacing tokens with "-STOPWORD-"'''
+		path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "stopwords.txt")
+		with open(path) as f:
+			# Remove commented out lines
+			lines = set(filter(lambda x: not x.startswith("#"), f.read().strip().split('\n')))
+		return lines
+
+	def tokensFromComm(self, comm):
+		'''Yields tokens in the given communication file.'''
+		for section in comm.sectionList:
+			if not section.sentenceList is None:
+				for sentence in section.sentenceList:
+					# Part of speech tagged tokens
+					if self.POS:
+						tokens = [i.tag for i in sentence.tokenization.tokenTaggingList[1].taggedTokenList]
+					# Normal text tokens
+					else:
+						tokens = [i.text for i in sentence.tokenization.tokenList.tokenList]
+
+					for token in tokens:
+						yield token.replace(":", "-CLN-").replace("#", "-PND-").replace(' ', '-SPC-')
+
+	def getVocab(self):
+		'''Generates vocab for an entire dataset, not including tokens that occur < CUTOFF.'''
+		tokenDict = {}
+		vocab = set()
+
+		for fileName, fileObj in self.getDataFiles(regex=self.regex):
+			comm = self.commFromData(fileObj.read())
+			for token in self.tokensFromComm(comm):
+				# Replace stopwords with special token
+				if not self.POS and token.lower() in self.stopWords:
+					token = "-STOPWORD-"
+
+				# Continue if already in vocab
+				if token in vocab:
+					continue
+				if not token in tokenDict:
+					tokenDict[token] = 0
+				tokenDict[token] += 1
+				if tokenDict[token] >= self.cutoff:
+					vocab.add(token)
+					del tokenDict[token]
+		return vocab
+
+	def tokenFeatures(self, comm, vocab):
+		'''Returns n-grams for a given comm object.
+		Replaces tokens not in vocab with OOV and returns tuples of length n.
+		'''
+
+		tokens = list(self.tokensFromComm(comm))
+		if self.order > 1:
+			tokens = ['-START-'] + tokens + ['-END-'] * (self.order-1)
+		ret = []
+		for i in range(len(tokens)):
+			toAdd = tokens[i:i+self.order]
+			for j in range(len(toAdd)):
+				if not self.POS and not toAdd[j] in vocab:
+					toAdd[j]  = '-OOV-'
+			if len(toAdd) == self.order and not all([j == '-END-' for j in toAdd]):
+				ret.append(tuple(toAdd))
+		return Counter(ret)
+
+	def generate(self):
+		docVocabs = []
+		vocab = None
+		if not self.POS:
+			logging.debug("Generating vocab.")
+			vocab = self.getVocab()
+
+		features = {}
+		for fileName, fileObj in self.getDataFiles(regex=self.regex):
+			featureID = self.featureID(fileName)
+			comm = self.commFromData(fileObj.read())
+			feats = self.tokenFeatures(comm, vocab)
+
+			if self.binary:
+				features[featureID] = [(self.FEATURE_NAME + '_' + ','.join(k), int(bool(v))) for k, v in feats.items()]
+			else:
+				features[featureID] = {self.FEATURE_NAME + '_' + ','.join(k) : v for k, v in feats.items()}
+
+		self.writeFeature(features)
+
 # Not currently being used, may be update if need be
 '''
 def hasAnswers(data, N):
@@ -302,128 +429,6 @@ def answerTime(data):
 
 	writeFeature(features, featName, data)
 '''
-##
-## NGRAM FEATURES
-##
-
-class NGramGen(FeatureGenerator, object):
-	'''Feature for N-grams in question or answers.'''
-	def __init__(self, data, order, cutoff, binary, POS, onAnswers):
-		'''
-		Args:
-			data      (str): Dataset to generate for.
-			order     (int): N-gram order to generate (e.g. unigram, bigram, etc.).
-			cutoff    (int): Minimum times a token must appear to not be replaced with "-OOV-".
-			binary    (bool): If True, feature values will be binary (1/0) rather than frequencies.
-			POS       (bool): If True, N-grams will be from part-of-speech tags rather than text tokens.
-			onAnswers (bool): If True, features will be generated for answer text, rather than question text.
-		'''
-		self.order = order
-		self.cutoff = cutoff
-		self.binary = binary
-		self.POS = POS
-
-		if onAnswers:
-			self.regex = r"answer\d\.comm"
-		else:
-			self.regex = r"question\.comm"
-
-
-		self.FEATURE_NAME = '{}-gram_cut{}'.format(order, cutoff)
-		if binary:
-			self.FEATURE_NAME += "_bin"
-		if POS:
-			self.FEATURE_NAME += "_pos"
-
-		if onAnswers:
-			self.FEATURE_NAME = "answer_" + self.FEATURE_NAME
-		else:
-			self.FEATURE_NAME = "question_" + self.FEATURE_NAME
-
-		self.stopWords = self.readStopWords()
-		super(NGramGen, self).__init__(data)
-
-	@staticmethod
-	def readStopWords():
-		'''Loads stop words from file, to be used in replacing tokens with "-STOPWORD-"'''
-		path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "stopwords.txt")
-		with open(path) as f:
-			lines = set(filter(lambda x: not x.startswith("#"), f.read().strip().split('\n')))
-		return lines
-
-	def tokensFromComm(self, comm):
-		'''Yields tokens in the given communication file.'''
-		for section in comm.sectionList:
-			if not section.sentenceList is None:
-				for sentence in section.sentenceList:
-					if self.POS:
-						for token in sentence.tokenization.tokenTaggingList[1].taggedTokenList:
-							yield token.tag.replace(":", "-CLN-").replace("#", "-PND-").replace(' ', '-SPC-')
-					else:
-						for token in sentence.tokenization.tokenList.tokenList:
-							token = token.text.replace(":", "-CLN-").replace("#", "-PND-").replace(' ', '-SPC-')
-							yield token
-
-	def getVocab(self):
-		'''Generates vocab for an entire dataset, not including tokens that occur < CUTOFF.'''
-		tokenDict = {}
-		vocab = set()
-
-		for fileName, fileObj in self.getDataFiles(regex=self.regex):
-			comm = self.commFromData(fileObj.read())
-			for token in self.tokensFromComm(comm):
-				# Replace stopwords with special token
-				if not self.POS and token.lower() in self.stopWords:
-					token = "-STOPWORD-"
-
-				# Continue if already in vocab
-				if token in vocab:
-					continue
-				if not token in tokenDict:
-					tokenDict[token] = 0
-				tokenDict[token] += 1
-				if tokenDict[token] >= self.cutoff:
-					vocab.add(token)
-					del tokenDict[token]
-		return vocab
-
-	def tokenFeatures(self, comm, vocab):
-		'''Returns n-grams for a given comm object.
-		Replaces tokens not in vocab with OOV and returns tuples of length n.
-		'''
-
-		tokens = list(self.tokensFromComm(comm))
-		if self.order > 1:
-			tokens = ['-START-'] + tokens + ['-END-'] * (self.order-1)
-		ret = []
-		for i in range(len(tokens)):
-			toAdd = tokens[i:i+self.order]
-			for j in range(len(toAdd)):
-				if not self.POS and not toAdd[j] in vocab:
-					toAdd[j]  = '-OOV-'
-			if len(toAdd) == self.order and not all([j == '-END-' for j in toAdd]):
-				ret.append(tuple(toAdd))
-		return Counter(ret)
-
-	def generate(self):
-		docVocabs = []
-		vocab = None
-		if not self.POS:
-			logging.debug("Generating vocab.")
-			vocab = self.getVocab()
-
-		features = {}
-		for fileName, fileObj in self.getDataFiles(regex=self.regex):
-			featureID = self.featureID(fileName)
-			comm = self.commFromData(fileObj.read())
-			feats = self.tokenFeatures(comm, vocab)
-
-			if self.binary:
-				features[featureID] = [(self.FEATURE_NAME + '_' + ','.join(k), int(bool(v))) for k, v in feats.items()]
-			else:
-				features[featureID] = {self.FEATURE_NAME + '_' + ','.join(k) : v for k, v in feats.items()}
-
-		self.writeFeature(features)
 
 # To be worked on after unittests for Ngram are made
 '''
