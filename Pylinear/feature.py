@@ -30,9 +30,13 @@ class FeatureGenerator:
 				yield '{}/{}'.format(i[0], j)
 
 	@staticmethod
-	def threadID(filename):
+	def threadID(fileName):
 		'''Returns thread name (md5 hash of url) assosicated with file.'''
-		return filename.split('/')[1]
+		ID = re.findall(r"[0-9a-z]{32}",fileName)
+		if ID:
+			return ID[0]
+		else:
+			return None
 
 	@classmethod
 	def featureID(cl, fileName):
