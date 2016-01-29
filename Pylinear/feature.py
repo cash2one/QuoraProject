@@ -48,7 +48,7 @@ class FeatureGenerator:
 
 		d = cl.answerNumber(fileName)
 		if d:
-			featID += "A" + d[0]
+			featID += "A" + d
 
 		return featID
 
@@ -148,7 +148,6 @@ class UpvoteGen(FeatureGenerator):
 			content = fileObj.read()
 			content = json.loads(content)
 
-			answerNumber = self.answerNumber(fileName)
 			featureID = self.featureID(fileName)
 			features[featureID] = {}
 			features[featureID][self.FEATURE_NAME] = content['upvotes']
@@ -432,10 +431,8 @@ def answerTime(data):
 			url = questionData['url']
 
 	writeFeature(features, featName, data)
-'''
 
-# To be worked on after unittests for Ngram are made
-'''
+#TFIDF
 def getDocumentVocab(comm, vocab=None, POS=False):
 	#Gets vocab of a single comm file.
 	global stopWords
