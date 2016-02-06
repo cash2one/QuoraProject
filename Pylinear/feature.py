@@ -158,11 +158,14 @@ class NormalizedUpvoteGen(FeatureGenerator):
 	'''Feature for normalized upvote count of comments.
 	Upvotes are normalized by comment with highest upvote count in thread.'''
 	FEATURE_NAME = "normalized_upvotes"
+	MIN_ANSWERS = 4
 	def generate(self):
 		features = {}
 		for threadID, threadFiles in self.getDataFilesByThread(regex=r'answer\d+\.json'):
 			# [(filename, upvotes), ...]
 			answerUpvotes = [(fileName, json.loads(i)['upvotes']) for fileName, i in threadFiles]
+			if len(answerUpvotes) < self.MIN_ANSWERS:
+				continue
 			# Max is bumped up to 1 to prevent div by 0
 			maxUpvotes = max(1,max(zip(*answerUpvotes)[1]))
 			for fileName, upvotes in answerUpvotes:
