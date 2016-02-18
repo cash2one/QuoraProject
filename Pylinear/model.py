@@ -26,24 +26,9 @@ def execute(command):
 
 def getFeatureData(data, name):
 	'''Generate features for each entry in datafile'''
-	with open('{}/features/{}.txt'.format(data, name)) as f:
-		line = f.readline()
-		while line:
-			entry = line.strip().split(' ')
-			yield [feature.split(':') for feature in entry]
-			line = f.readline()
-
-def makeIDSet(data, train, features):
-	'''Returns set of ids present in all given feature files.'''
-	with open('{}/features/{}.list.txt'.format(data, train)) as f:
-		d = f.read()
-		ret = set(json.loads(d))
-
-	for name in features:
-		with open('{}/features/{}.list.txt'.format(data, name)) as f:
-			temp = set(json.load(f))
-			ret &= temp
-	return ret
+	with open('{}/features/{}.json'.format(data, name)) as f:
+		data = json.load(f)
+	return data
 
 ### GLOBALS ###
 
@@ -60,12 +45,22 @@ def combineFeatures(data, train, featureNames, idFile):
 	The benefit of this, however, is that the full feature file isn't loaded into memory.
 	'''
 
-	# Create feature data generators (these don't load in the whole file to memory)
+	# Load feature data
 	trainData = getFeatureData(data, train)
 	featureData = [getFeatureData(data, f) for f in featureNames]
 
-	# Create set of ids present in all feature files
-	idSet = makeIDSet(data, train, featureNames)
+	# Filter out features not defined for all
+	sharedKeys = set(trainData.keys())
+	for feature in featureData:
+		sharedKeys &= set(feature.keys())
+
+	# Merge feature data into one dict
+	filteredDict = {}
+	for key in sharedKeys:
+		filteredDict[key] = {}
+		filteredDict[key].update(trainData[key])
+		for feature in featureData:
+			filteredDict[key].update(feature[key])
 
 	# Output directory
 	outDir = os.path.join(data, 'results', '{},{}'.format(train,','.join(featureNames)))
@@ -86,58 +81,29 @@ def combineFeatures(data, train, featureNames, idFile):
 		featureC = 1
 
 
+	# Add comment to first line describing what features were used
+	s = " # {},{}\n".format(train, ','.join(featureNames))
+
 	# Join feature files
-	s = ''
-	first = True
-	try:
-		while True:
-			# Get next valid feature line from 'to predict'
-			trainLineID = ''
-			while trainLineID not in idSet:
-				trainEntry = trainData.next()
-				trainLineID = trainEntry[0][0]
-			s += '{} '.format(trainEntry[1][1])
-
-			# Get next valid feature lines from 'predictors'
-			featureTuples = []
-			for f in featureData:
-				featLineID = ''
-				while featLineID not in idSet:
-					featEntry = f.next()
-					featLineID = featEntry[0][0]
-				assert trainLineID == featLineID
-				features = featEntry[1:]
-
-				# Each feature on feature line
-				for feature in features:
-					if not feature[0] in featureIDs:
-						# Skip feature if not present in train
-						if ignoreNew:
-							continue
-						# Add feature to index
-						featureIDs[feature[0]] = featureC
+	for key in sharedKeys:
+		line = ''
+		for featureName, value in filteredDict[key].items():
+			if featureName == train:
+				line = str(value) + line
+			else:
+				if ignoreNew:
+					if not featureName in featureIDs:
+						continue
+				else:
+					if featureName in featureIDs:
+						featureID = featureIDs[featureName]
+					else:
+						featureIDs[featureName] = featureC
+						featureID = featureC
 						featureC += 1
-					i = featureIDs[feature[0]]
-					if feature[0]: # I forget why this check is necessary but now I'm afraid to remove it...
-						featureTuples.append((i, feature[1]))
-
-			# Feature IDs need to be in accending order
-			featureTuples.sort()
-			for ID, featureVal in featureTuples:
-				s += '{}:{} '.format(ID, featureVal)
-
-			# Add comment to first line describing what features were used
-			if first:
-				s += " # {},{}".format(train, ','.join(featureNames))
-				first = False
-
-			s = s.strip()
-			outFile.write(s + '\n')
-			s = ''
-	except StopIteration:
-		pass
-
-	outFile.close()
+				line += ' {}:{}'.format(featureID, value)
+		s += line + '\n'
+	outFile.write(s)
 
 	# Write out name -> ID mapping
 	with open(os.path.join(outDir, "map.json"), 'w') as f:
